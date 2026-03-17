@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 20 14.3% 4.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14.3% 4.1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14.3% 4.1%;
+    /* StagerVault amber/gold primary */
+    --primary: 32 77% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 60 4.8% 95.9%;
+    --secondary-foreground: 24 9.8% 10%;
+    --muted: 60 4.8% 95.9%;
+    --muted-foreground: 25 5.3% 44.7%;
+    --accent: 60 4.8% 95.9%;
+    --accent-foreground: 24 9.8% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 60 9.1% 97.8%;
+    --border: 20 5.9% 90%;
+    --input: 20 5.9% 90%;
+    --ring: 32 77% 52%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 20 14.3% 4.1%;
+    --foreground: 60 9.1% 97.8%;
+    --card: 20 14.3% 4.1%;
+    --card-foreground: 60 9.1% 97.8%;
+    --popover: 20 14.3% 4.1%;
+    --popover-foreground: 60 9.1% 97.8%;
+    --primary: 32 77% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 12 6.5% 15.1%;
+    --secondary-foreground: 60 9.1% 97.8%;
+    --muted: 12 6.5% 15.1%;
+    --muted-foreground: 24 5.4% 63.9%;
+    --accent: 12 6.5% 15.1%;
+    --accent-foreground: 60 9.1% 97.8%;
+    --destructive: 0 72.2% 50.6%;
+    --destructive-foreground: 60 9.1% 97.8%;
+    --border: 12 6.5% 15.1%;
+    --input: 12 6.5% 15.1%;
+    --ring: 32 77% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Improve mobile tap targets */
+  button,
+  [role="button"],
+  a {
+    @apply touch-manipulation;
+  }
+}
+
+@layer utilities {
+  /* Photo grid – responsive masonry-like layout */
+  .photo-grid {
+    @apply grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4;
+  }
+
+  /* Status badge colors */
+  .status-pending_intake   { @apply bg-gray-100 text-gray-700; }
+  .status-received         { @apply bg-blue-100 text-blue-700; }
+  .status-stored           { @apply bg-green-100 text-green-700; }
+  .status-assembled        { @apply bg-purple-100 text-purple-700; }
+  .status-staged           { @apply bg-amber-100 text-amber-700; }
+  .status-out_for_delivery { @apply bg-orange-100 text-orange-700; }
+  .status-delivered        { @apply bg-teal-100 text-teal-700; }
+  .status-returned         { @apply bg-indigo-100 text-indigo-700; }
+  .status-damaged          { @apply bg-red-100 text-red-700; }
+  .status-disposed         { @apply bg-gray-200 text-gray-500; }
+
+  /* Condition colors */
+  .condition-excellent { @apply bg-green-50 text-green-700 border-green-200; }
+  .condition-good      { @apply bg-blue-50 text-blue-700 border-blue-200; }
+  .condition-fair      { @apply bg-yellow-50 text-yellow-700 border-yellow-200; }
+  .condition-damaged   { @apply bg-red-50 text-red-700 border-red-200; }
+  .condition-unknown   { @apply bg-gray-50 text-gray-600 border-gray-200; }
+
+  /* Safe area insets for PWA */
+  .safe-top    { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+}
