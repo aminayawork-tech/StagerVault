@@ -3,7 +3,7 @@
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useCallback, useRef } from "react";
-import { Package, Search, MapPin, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Package, Search, MapPin, ChevronLeft, ChevronRight, X, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -184,6 +184,7 @@ export function ItemsTable({
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3">Condition</th>
                     <th className="px-4 py-3">Received</th>
+                    <th className="px-4 py-3 w-10" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -254,6 +255,15 @@ export function ItemsTable({
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                         {formatDate(item.received_at ?? item.created_at)}
                       </td>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <Link
+                          href={`/dashboard/admin/items/${item.id}/edit`}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                          title="Edit item"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -298,6 +308,14 @@ export function ItemsTable({
                       )}
                     </div>
                   </div>
+                  <Link
+                    href={`/dashboard/admin/items/${item.id}/edit`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Edit item"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Link>
                 </Link>
               ))}
             </div>
