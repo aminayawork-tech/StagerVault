@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { MapPin, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,26 +55,30 @@ export function LocationsPageClient({ locations, isAdmin }: { locations: Locatio
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {locations.map((loc) => (
-            <Card key={loc.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-lg font-bold text-gray-900">{loc.label}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    loc.capacity && loc.current_count >= loc.capacity
-                      ? "bg-red-100 text-red-700"
-                      : "bg-green-100 text-green-700"
-                  }`}>
-                    {loc.current_count}{loc.capacity ? `/${loc.capacity}` : ""} items
-                  </span>
-                </div>
-                {loc.description && (
-                  <p className="text-sm text-gray-500">{loc.description}</p>
-                )}
-                <p className="text-xs text-gray-400 mt-1">
-                  Zone {loc.zone} · Aisle {loc.aisle} · Bay {loc.bay}
-                </p>
-              </CardContent>
-            </Card>
+            <Link key={loc.id} href={`/dashboard/admin/locations/${loc.id}`}>
+              <Card className="hover:shadow-md hover:border-orange-300 transition-all cursor-pointer">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-lg font-bold text-gray-900">{loc.label}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      loc.capacity && loc.current_count >= loc.capacity
+                        ? "bg-red-100 text-red-700"
+                        : loc.current_count > 0
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-green-100 text-green-700"
+                    }`}>
+                      {loc.current_count}{loc.capacity ? `/${loc.capacity}` : ""} items
+                    </span>
+                  </div>
+                  {loc.description && (
+                    <p className="text-sm text-gray-500">{loc.description}</p>
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">
+                    Zone {loc.zone} · Aisle {loc.aisle} · Bay {loc.bay}
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
