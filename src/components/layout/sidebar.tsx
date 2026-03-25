@@ -174,7 +174,10 @@ export function Sidebar({ role, warehouseName, userName, unreadNotifications = 0
       <div className="px-3 pb-4 border-t border-gray-800 pt-4">
         <Link
           href="/dashboard/notifications"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-gray-800 transition-colors mb-1"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors mb-1",
+            "text-gray-400 hover:text-white hover:bg-gray-800"
+          )}
         >
           <Bell className="h-4 w-4 shrink-0" />
           <span>Notifications</span>

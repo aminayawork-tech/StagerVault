@@ -60,7 +60,7 @@ export function Topbar({ role, warehouseName, userName, unreadNotifications = 0 
         <div className="flex-1" />
 
         {/* Notifications */}
-        <Link href="/dashboard/admin/settings" className="relative p-2 text-gray-500 hover:text-gray-700">
+        <Link href="/dashboard/notifications" className="relative p-2 text-gray-500 hover:text-gray-700">
           <Bell className="h-5 w-5" />
           {unreadNotifications > 0 && (
             <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
