@@ -12,6 +12,7 @@ export const metadata: Metadata = { title: "Items" };
 interface SearchParams {
   status?: string;
   client?: string;
+  condition?: string;
   q?: string;
   page?: string;
 }
@@ -54,7 +55,8 @@ export default async function ItemsPage({
 
   if (params.status) query = query.eq("status", params.status);
   if (params.client) query = query.eq("client_id", params.client);
-  if (params.q) query = query.ilike("name", `%${params.q}%`);
+  if (params.condition) query = query.eq("condition", params.condition);
+  if (params.q) query = query.or(`name.ilike.%${params.q}%,barcode.ilike.%${params.q}%`);
 
   const { data: items, count } = await query;
 
@@ -91,6 +93,7 @@ export default async function ItemsPage({
           filters={{
             status: params.status,
             client: params.client,
+            condition: params.condition,
             q: params.q,
           }}
         />

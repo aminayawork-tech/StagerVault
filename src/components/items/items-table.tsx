@@ -2,8 +2,8 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useCallback } from "react";
-import { Package, Search, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useRef } from "react";
+import { Package, Search, MapPin, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,7 +20,7 @@ import {
   getConditionColor,
   formatDate,
 } from "@/lib/utils/format";
-import { itemStatusValues } from "@/lib/validations/item";
+import { itemStatusValues, itemConditionValues } from "@/lib/validations/item";
 
 interface ItemRow {
   id: string;
@@ -42,7 +42,7 @@ interface ItemsTableProps {
   total: number;
   page: number;
   pageSize: number;
-  filters: { status?: string; client?: string; q?: string };
+  filters: { status?: string; client?: string; condition?: string; q?: string };
 }
 
 export function ItemsTable({
@@ -57,6 +57,7 @@ export function ItemsTable({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const totalPages = Math.ceil(total / pageSize);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const updateFilter = useCallback(
     (key: string, value: string | undefined) => {
@@ -72,6 +73,18 @@ export function ItemsTable({
     [router, pathname, searchParams]
   );
 
+  function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => updateFilter("q", val || undefined), 350);
+  }
+
+  const hasFilters = filters.status || filters.client || filters.condition || filters.q;
+
+  function clearAllFilters() {
+    router.push(pathname);
+  }
+
   return (
     <div className="space-y-4">
       {/* Filters */}
@@ -80,13 +93,9 @@ export function ItemsTable({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             className="pl-9"
-            placeholder="Search items…"
+            placeholder="Search by name or barcode…"
             defaultValue={filters.q}
-            onChange={(e) => {
-              const val = e.target.value;
-              const timeout = setTimeout(() => updateFilter("q", val || undefined), 300);
-              return () => clearTimeout(timeout);
-            }}
+            onChange={handleSearchChange}
           />
         </div>
 
@@ -123,6 +132,30 @@ export function ItemsTable({
             ))}
           </SelectContent>
         </Select>
+
+        <Select
+          value={filters.condition ?? "all"}
+          onValueChange={(v) => updateFilter("condition", v === "all" ? undefined : v)}
+        >
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="All conditions" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All conditions</SelectItem>
+            {itemConditionValues.map((c) => (
+              <SelectItem key={c} value={c}>
+                {formatCondition(c)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {hasFilters && (
+          <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-gray-500">
+            <X className="mr-1.5 h-3.5 w-3.5" />
+            Clear
+          </Button>
+        )}
       </div>
 
       {/* Table */}
@@ -131,6 +164,11 @@ export function ItemsTable({
           <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-400">
             <Package className="h-12 w-12" />
             <p className="text-sm">No items found</p>
+            {hasFilters && (
+              <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                Clear filters
+              </Button>
+            )}
           </div>
         ) : (
           <>
