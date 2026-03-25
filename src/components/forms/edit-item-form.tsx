@@ -42,7 +42,7 @@ export function EditItemForm({ item, clients, locations }: EditItemFormProps) {
     handleSubmit,
     setValue,
     watch,
-    formState: { errors, isDirty },
+    formState: { errors },
   } = useForm<UpdateItemInput>({
     resolver: zodResolver(updateItemSchema),
     defaultValues: {
@@ -237,7 +237,7 @@ export function EditItemForm({ item, clients, locations }: EditItemFormProps) {
       </details>
 
       <div className="flex gap-3">
-        <Button type="submit" disabled={saving || !isDirty}>
+        <Button type="submit" disabled={saving}>
           {saving ? (
             <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</>
           ) : (
