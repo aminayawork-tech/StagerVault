@@ -53,11 +53,18 @@ export async function createInvoice(
       0
     );
 
+    // Generate invoice number: INV-YYYYMM-XXXX
+    const now = new Date();
+    const yyyymm = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const suffix = Math.floor(1000 + Math.random() * 9000); // 4-digit random
+    const invoiceNumber = `INV-${yyyymm}-${suffix}`;
+
     const { data: invoice, error } = await supabase
       .from("invoices")
       .insert({
         client_id: validated.client_id,
         warehouse_id: profile.warehouse_id,
+        invoice_number: invoiceNumber,
         period_start: validated.period_start,
         period_end: validated.period_end,
         due_date: validated.due_date ?? null,
