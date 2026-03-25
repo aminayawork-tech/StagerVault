@@ -53,7 +53,7 @@ export function MobileSidebar({ open, onClose, ...sidebarProps }: MobileSidebarP
             <X className="h-4 w-4" />
           </button>
         </div>
-        <Sidebar {...sidebarProps} />
+        <Sidebar {...sidebarProps} className="flex flex-col w-full h-full bg-gray-900 text-white overflow-y-auto" />
       </div>
     </div>
   );

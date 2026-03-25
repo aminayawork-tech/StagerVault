@@ -124,14 +124,15 @@ interface SidebarProps {
   warehouseName: string;
   userName: string;
   unreadNotifications?: number;
+  className?: string;
 }
 
-export function Sidebar({ role, warehouseName, userName, unreadNotifications = 0 }: SidebarProps) {
+export function Sidebar({ role, warehouseName, userName, unreadNotifications = 0, className }: SidebarProps) {
   const pathname = usePathname();
   const visibleItems = navItems.filter((item) => item.roles.includes(role));
 
   return (
-    <aside className="hidden lg:flex flex-col w-60 min-h-screen bg-gray-900 text-white shrink-0">
+    <aside className={className ?? "hidden lg:flex flex-col w-60 min-h-screen bg-gray-900 text-white shrink-0"}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-gray-800">
         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-vault-500 shrink-0">
