@@ -173,25 +173,31 @@ export default async function ItemDetailPage({
             <CardTitle className="text-base">Location & Dates</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <Row label="Location">
-              {item.location ? (
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-gray-400" />
-                  <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono">
-                    {(item.location as any).label}
-                  </code>
-                </span>
-              ) : (
-                <span className="text-gray-400">Unassigned</span>
-              )}
-            </Row>
-            <Row label="Received">{formatDate(item.received_at ?? item.created_at)}</Row>
-            <Row label="Last Updated">{formatDateTime(item.updated_at)}</Row>
-            {item.staged_address && (
+            {/* Location: only show warehouse slot when item is physically there */}
+            {["received", "stored", "assembled"].includes(item.status) ? (
+              <Row label="Warehouse Location">
+                {item.location ? (
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                    <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono">
+                      {(item.location as any).label}
+                    </code>
+                  </span>
+                ) : (
+                  <span className="text-gray-400">Unassigned</span>
+                )}
+              </Row>
+            ) : item.staged_address ? (
               <Row label="Staging Address">
-                <span className="text-right text-sm">{item.staged_address}</span>
+                <span className="text-right text-sm max-w-[200px]">{item.staged_address}</span>
+              </Row>
+            ) : (
+              <Row label="Location">
+                <span className="text-gray-400 capitalize">{item.status.replace(/_/g, " ")}</span>
               </Row>
             )}
+            <Row label="Received">{formatDate(item.received_at ?? item.created_at)}</Row>
+            <Row label="Last Updated">{formatDateTime(item.updated_at)}</Row>
             {item.scheduled_pickup_at && (
               <Row label="Pickup Date">
                 <span className="text-amber-600 font-medium">

@@ -5,7 +5,11 @@ import { ReceiveItemForm } from "@/components/forms/receive-item-form";
 
 export const metadata: Metadata = { title: "Receive Item" };
 
-export default async function ReceiveItemPage() {
+export default async function ReceiveItemPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ barcode?: string }>;
+}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
@@ -17,6 +21,8 @@ export default async function ReceiveItemPage() {
     .single();
 
   if (!profile || !["admin", "staff"].includes(profile.role)) redirect("/");
+
+  const { barcode } = await searchParams;
 
   // Prefetch clients and locations for the form
   const [{ data: clients }, { data: locations }] = await Promise.all([
@@ -46,6 +52,7 @@ export default async function ReceiveItemPage() {
       <ReceiveItemForm
         clients={clients ?? []}
         locations={locations ?? []}
+        initialBarcode={barcode}
       />
     </div>
   );

@@ -39,6 +39,7 @@ interface ReceiveItemFormProps {
     current_count: number;
     capacity: number | null;
   }[];
+  initialBarcode?: string;
 }
 
 const ITEM_CATEGORIES = [
@@ -47,7 +48,7 @@ const ITEM_CATEGORIES = [
   "media", "storage", "lighting", "other",
 ];
 
-export function ReceiveItemForm({ clients, locations }: ReceiveItemFormProps) {
+export function ReceiveItemForm({ clients, locations, initialBarcode }: ReceiveItemFormProps) {
   const router = useRouter();
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
@@ -64,7 +65,7 @@ export function ReceiveItemForm({ clients, locations }: ReceiveItemFormProps) {
     formState: { errors },
   } = useForm<CreateItemInput>({
     resolver: zodResolver(createItemSchema),
-    defaultValues: { quantity: 1, condition: "unknown" },
+    defaultValues: { quantity: 1, condition: "unknown", barcode: initialBarcode ?? "" },
   });
 
   // ── Drag & drop photos ────────────────────────────────────────────────────

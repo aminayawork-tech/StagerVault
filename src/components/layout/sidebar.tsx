@@ -52,6 +52,12 @@ const navItems: NavItem[] = [
     roles: ["admin", "staff"],
   },
   {
+    label: "Scan Item",
+    href: "/dashboard/staff/scan",
+    icon: ScanLine,
+    roles: ["staff", "admin"],
+  },
+  {
     label: "Receive Items",
     href: "/dashboard/staff/receive",
     icon: ScanLine,

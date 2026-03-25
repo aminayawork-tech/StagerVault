@@ -311,6 +311,7 @@ export async function checkOutItem(input: {
       .from("items")
       .update({
         status: "staged",
+        location_id: null, // item is no longer in the warehouse
         staged_address: input.staged_address,
         scheduled_pickup_at: input.scheduled_pickup_at ?? null,
         notes: [

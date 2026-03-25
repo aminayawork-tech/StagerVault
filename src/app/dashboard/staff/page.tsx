@@ -73,18 +73,20 @@ export default async function StaffDashboard() {
         <p className="text-sm text-gray-500 mt-0.5">Here's what needs your attention today.</p>
       </div>
 
+      {/* Primary scan CTA — big on mobile */}
+      <Button asChild className="w-full h-16 text-lg gap-3 bg-vault-500 hover:bg-vault-600 shadow-md">
+        <Link href="/dashboard/staff/scan">
+          <ScanLine className="h-7 w-7" />
+          Scan Item
+        </Link>
+      </Button>
+
       {/* Quick actions */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Button asChild className="h-auto flex-col gap-2 py-4">
-          <Link href="/dashboard/staff/receive">
-            <ScanLine className="h-6 w-6" />
-            <span className="text-xs font-medium">Receive Item</span>
-          </Link>
-        </Button>
+      <div className="grid grid-cols-3 gap-3">
         <Button asChild variant="outline" className="h-auto flex-col gap-2 py-4">
-          <Link href="/dashboard/admin/items?status=stored">
+          <Link href="/dashboard/staff/receive">
             <Package className="h-6 w-6" />
-            <span className="text-xs font-medium">Find Item</span>
+            <span className="text-xs font-medium">Receive</span>
           </Link>
         </Button>
         <Button asChild variant="outline" className="h-auto flex-col gap-2 py-4">
