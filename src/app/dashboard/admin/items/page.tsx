@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Plus } from "lucide-react";
@@ -80,18 +81,20 @@ export default async function ItemsPage({
         </Button>
       </div>
 
-      <ItemsTable
-        items={(items as any[]) ?? []}
-        clients={clients ?? []}
-        total={count ?? 0}
-        page={page}
-        pageSize={pageSize}
-        filters={{
-          status: params.status,
-          client: params.client,
-          q: params.q,
-        }}
-      />
+      <Suspense fallback={null}>
+        <ItemsTable
+          items={(items as any[]) ?? []}
+          clients={clients ?? []}
+          total={count ?? 0}
+          page={page}
+          pageSize={pageSize}
+          filters={{
+            status: params.status,
+            client: params.client,
+            q: params.q,
+          }}
+        />
+      </Suspense>
     </div>
   );
 }
