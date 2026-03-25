@@ -137,7 +137,7 @@ export default async function AdminDashboard() {
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/admin/items/new">
+            <Link href="/dashboard/staff/receive">
               <Package className="mr-2 h-4 w-4" />
               Receive Item
             </Link>
