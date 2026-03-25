@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { useState } from "react";
-import { Loader2, Save } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Loader2, Save, Camera, X } from "lucide-react";
+import { useDropzone } from "react-dropzone";
 import { updateItemSchema, type UpdateItemInput } from "@/lib/validations/item";
-import { updateItem } from "@/lib/actions/items";
+import { updateItem, uploadItemPhotos } from "@/lib/actions/items";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,8 @@ interface EditItemFormProps {
 export function EditItemForm({ item, clients, locations }: EditItemFormProps) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
 
   const {
     register,
@@ -65,14 +68,52 @@ export function EditItemForm({ item, clients, locations }: EditItemFormProps) {
     },
   });
 
+  const onDrop = useCallback((accepted: File[]) => {
+    const newFiles = [...photoFiles, ...accepted].slice(0, 10);
+    setPhotoFiles(newFiles);
+    setPhotoPreviews(newFiles.map((f) => URL.createObjectURL(f)));
+  }, [photoFiles]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { "image/*": [".jpg", ".jpeg", ".png", ".webp", ".heic"] },
+    maxSize: 10 * 1024 * 1024,
+  });
+
+  function removePhoto(index: number) {
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== index));
+    setPhotoPreviews((prev) => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
+  }
+
   async function onSubmit(values: UpdateItemInput) {
     setSaving(true);
     const result = await updateItem(values);
-    setSaving(false);
+
     if (!result.success) {
+      setSaving(false);
       toast.error(result.error ?? "Failed to save changes");
       return;
     }
+
+    // Upload new photos if any
+    if (photoFiles.length > 0) {
+      const fd = new FormData();
+      photoFiles.forEach((f) => fd.append("photos", f));
+      const photoResult = await uploadItemPhotos(item.id, fd);
+      if (!photoResult.success) {
+        toast.warning("Item saved but some photos failed to upload.");
+      } else {
+        toast.success(`Item updated · ${photoFiles.length} photo${photoFiles.length > 1 ? "s" : ""} uploaded`);
+        setSaving(false);
+        router.push(`/dashboard/admin/items/${item.id}`);
+        return;
+      }
+    }
+
+    setSaving(false);
     toast.success("Item updated");
     router.push(`/dashboard/admin/items/${item.id}`);
   }
@@ -208,6 +249,63 @@ export function EditItemForm({ item, clients, locations }: EditItemFormProps) {
         </CardContent>
       </Card>
 
+      {/* Photo upload */}
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <Label>Add / Replace Photos ({photoFiles.length}/10)</Label>
+          {item.primary_photo_url && photoFiles.length === 0 && (
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={item.primary_photo_url}
+                alt="Current primary"
+                className="w-14 h-14 rounded-lg object-cover shrink-0"
+              />
+              <p className="text-xs text-gray-500">Current primary photo. Upload new photos to add more.</p>
+            </div>
+          )}
+
+          <div
+            {...getRootProps()}
+            className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+              isDragActive
+                ? "border-vault-400 bg-vault-50"
+                : "border-gray-200 hover:border-vault-300"
+            }`}
+          >
+            <input {...getInputProps()} />
+            <Camera className="mx-auto h-8 w-8 text-gray-300 mb-2" />
+            <p className="text-sm text-gray-500">
+              {isDragActive ? "Drop photos here…" : "Drag photos here, or tap to take/select"}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">JPEG, PNG, WEBP, HEIC · Max 10MB each</p>
+          </div>
+
+          {photoPreviews.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              {photoPreviews.map((url, i) => (
+                <div key={url} className="relative aspect-square rounded-lg overflow-hidden group">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                  {i === 0 && (
+                    <span className="absolute bottom-1 left-1 text-[10px] bg-vault-500 text-white px-1.5 py-0.5 rounded">
+                      Primary
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Dimensions */}
       <details className="group">
         <summary className="cursor-pointer text-sm font-medium text-gray-600 hover:text-gray-900 select-none">
@@ -236,7 +334,7 @@ export function EditItemForm({ item, clients, locations }: EditItemFormProps) {
         </Card>
       </details>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 pb-6">
         <Button type="submit" disabled={saving}>
           {saving ? (
             <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</>
