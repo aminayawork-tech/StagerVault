@@ -292,6 +292,51 @@ export async function deleteItem(itemId: string): Promise<ActionResult<null>> {
   }
 }
 
+// ─── Check Out Item (Delivery) ────────────────────────────────────────────────
+
+export async function checkOutItem(input: {
+  item_id: string;
+  delivery_address: string;
+  recipient_name?: string;
+  notes?: string;
+}): Promise<ActionResult<null>> {
+  try {
+    const { supabase, user, profile } = await getAuthContext();
+    if (!["admin", "staff"].includes(profile.role)) {
+      return { success: false, error: "Insufficient permissions" };
+    }
+
+    const deliveryNote = [
+      `Delivery address: ${input.delivery_address}`,
+      input.recipient_name ? `Recipient: ${input.recipient_name}` : null,
+      input.notes ? `Notes: ${input.notes}` : null,
+    ]
+      .filter(Boolean)
+      .join(" | ");
+
+    const { error } = await supabase
+      .from("items")
+      .update({
+        status: "out_for_delivery",
+        notes: deliveryNote,
+        created_by: user.id,
+      })
+      .eq("id", input.item_id)
+      .eq("warehouse_id", profile.warehouse_id);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath("/dashboard/admin/items");
+    revalidatePath(`/dashboard/admin/items/${input.item_id}`);
+    return { success: true, data: null };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to check out item",
+    };
+  }
+}
+
 // ─── Get Signed Photo URL ─────────────────────────────────────────────────────
 
 export async function getSignedPhotoUrl(

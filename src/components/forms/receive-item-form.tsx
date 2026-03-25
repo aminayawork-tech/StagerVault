@@ -429,6 +429,13 @@ export function ReceiveItemForm({ clients, locations }: ReceiveItemFormProps) {
         </CardContent>
       </Card>
 
+      {/* Validation errors summary */}
+      {Object.keys(errors).length > 0 && (
+        <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+          Please fix the following: {Object.values(errors).map((e) => e?.message).filter(Boolean).join(", ")}
+        </div>
+      )}
+
       {/* Submit */}
       <div className="flex gap-3 pb-safe-bottom">
         <Button type="submit" className="flex-1" disabled={isSubmitting}>

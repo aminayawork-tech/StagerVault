@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PhotoGallery } from "@/components/items/photo-gallery";
 import { ItemEventHistory } from "@/components/items/item-event-history";
+import { ItemActions } from "@/components/items/item-actions";
 import {
   formatItemStatus,
   getStatusColor,
@@ -104,12 +105,19 @@ export default async function ItemDetailPage({
           </p>
         </div>
         {isStaff && (
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/dashboard/admin/items/${id}/edit`}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <ItemActions
+              itemId={id}
+              itemName={item.name}
+              currentStatus={item.status}
+            />
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/dashboard/admin/items/${id}/edit`}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Link>
+            </Button>
+          </div>
         )}
       </div>
 
