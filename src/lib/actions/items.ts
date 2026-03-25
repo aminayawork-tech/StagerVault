@@ -296,8 +296,9 @@ export async function deleteItem(itemId: string): Promise<ActionResult<null>> {
 
 export async function checkOutItem(input: {
   item_id: string;
-  delivery_address: string;
+  staged_address: string;
   recipient_name?: string;
+  scheduled_pickup_at?: string | null;
   notes?: string;
 }): Promise<ActionResult<null>> {
   try {
@@ -306,19 +307,16 @@ export async function checkOutItem(input: {
       return { success: false, error: "Insufficient permissions" };
     }
 
-    const deliveryNote = [
-      `Delivery address: ${input.delivery_address}`,
-      input.recipient_name ? `Recipient: ${input.recipient_name}` : null,
-      input.notes ? `Notes: ${input.notes}` : null,
-    ]
-      .filter(Boolean)
-      .join(" | ");
-
     const { error } = await supabase
       .from("items")
       .update({
-        status: "out_for_delivery",
-        notes: deliveryNote,
+        status: "staged",
+        staged_address: input.staged_address,
+        scheduled_pickup_at: input.scheduled_pickup_at ?? null,
+        notes: [
+          input.recipient_name ? `Recipient: ${input.recipient_name}` : null,
+          input.notes ?? null,
+        ].filter(Boolean).join(" | ") || null,
         created_by: user.id,
       })
       .eq("id", input.item_id)
@@ -333,6 +331,45 @@ export async function checkOutItem(input: {
     return {
       success: false,
       error: err instanceof Error ? err.message : "Failed to check out item",
+    };
+  }
+}
+
+export async function returnToWarehouse(input: {
+  item_id: string;
+  location_id?: string | null;
+  notes?: string;
+}): Promise<ActionResult<null>> {
+  try {
+    const { supabase, user, profile } = await getAuthContext();
+    if (!["admin", "staff"].includes(profile.role)) {
+      return { success: false, error: "Insufficient permissions" };
+    }
+
+    const updatePayload: Record<string, unknown> = {
+      status: "received",
+      staged_address: null,
+      scheduled_pickup_at: null,
+      created_by: user.id,
+    };
+    if (input.location_id !== undefined) updatePayload.location_id = input.location_id;
+    if (input.notes) updatePayload.notes = `Returned: ${input.notes}`;
+
+    const { error } = await supabase
+      .from("items")
+      .update(updatePayload)
+      .eq("id", input.item_id)
+      .eq("warehouse_id", profile.warehouse_id);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath("/dashboard/admin/items");
+    revalidatePath(`/dashboard/admin/items/${input.item_id}`);
+    return { success: true, data: null };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to return item",
     };
   }
 }

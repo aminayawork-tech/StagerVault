@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Truck, CheckCircle } from "lucide-react";
+import { Truck, CheckCircle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { DeliverItemModal } from "./deliver-item-modal";
-import { updateItemStatus } from "@/lib/actions/items";
+import { updateItemStatus, returnToWarehouse } from "@/lib/actions/items";
 
 interface ItemActionsProps {
   itemId: string;
@@ -19,8 +19,9 @@ export function ItemActions({ itemId, itemName, currentStatus }: ItemActionsProp
   const [showDeliverModal, setShowDeliverModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const canDeliver = ["received", "stored", "assembled", "staged"].includes(currentStatus);
+  const canDeliver = ["received", "stored", "assembled"].includes(currentStatus);
   const canMarkDelivered = currentStatus === "out_for_delivery";
+  const canReturn = currentStatus === "staged";
 
   async function handleMarkDelivered() {
     if (!confirm(`Mark "${itemName}" as delivered?`)) return;
@@ -35,7 +36,20 @@ export function ItemActions({ itemId, itemName, currentStatus }: ItemActionsProp
     router.refresh();
   }
 
-  if (!canDeliver && !canMarkDelivered) return null;
+  async function handleReturn() {
+    if (!confirm(`Return "${itemName}" to warehouse?`)) return;
+    setLoading(true);
+    const result = await returnToWarehouse({ item_id: itemId });
+    setLoading(false);
+    if (!result.success) {
+      toast.error(result.error ?? "Failed to return item");
+      return;
+    }
+    toast.success("Item returned to warehouse");
+    router.refresh();
+  }
+
+  if (!canDeliver && !canMarkDelivered && !canReturn) return null;
 
   return (
     <>
@@ -55,7 +69,7 @@ export function ItemActions({ itemId, itemName, currentStatus }: ItemActionsProp
             className="text-amber-600 border-amber-200 hover:bg-amber-50"
           >
             <Truck className="mr-2 h-4 w-4" />
-            Deliver
+            Stage for Delivery
           </Button>
         )}
         {canMarkDelivered && (
@@ -68,6 +82,18 @@ export function ItemActions({ itemId, itemName, currentStatus }: ItemActionsProp
           >
             <CheckCircle className="mr-2 h-4 w-4" />
             Mark Delivered
+          </Button>
+        )}
+        {canReturn && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleReturn}
+            disabled={loading}
+            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+          >
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Return to Warehouse
           </Button>
         )}
       </div>

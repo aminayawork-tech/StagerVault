@@ -187,6 +187,18 @@ export default async function ItemDetailPage({
             </Row>
             <Row label="Received">{formatDate(item.received_at ?? item.created_at)}</Row>
             <Row label="Last Updated">{formatDateTime(item.updated_at)}</Row>
+            {item.staged_address && (
+              <Row label="Staging Address">
+                <span className="text-right text-sm">{item.staged_address}</span>
+              </Row>
+            )}
+            {item.scheduled_pickup_at && (
+              <Row label="Pickup Date">
+                <span className="text-amber-600 font-medium">
+                  {formatDate(item.scheduled_pickup_at)}
+                </span>
+              </Row>
+            )}
             {isStaff && item.purchase_price && (
               <Row label="Purchase Price">{formatCurrency(item.purchase_price)}</Row>
             )}

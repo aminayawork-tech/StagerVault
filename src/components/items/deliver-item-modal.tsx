@@ -20,20 +20,22 @@ export function DeliverItemModal({ itemId, itemName, onClose }: DeliverItemModal
   const router = useRouter();
   const [address, setAddress] = useState("");
   const [recipient, setRecipient] = useState("");
+  const [scheduledPickup, setScheduledPickup] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!address.trim()) {
-      toast.error("Delivery address is required");
+      toast.error("Staging address is required");
       return;
     }
     setLoading(true);
     const result = await checkOutItem({
       item_id: itemId,
-      delivery_address: address,
+      staged_address: address,
       recipient_name: recipient || undefined,
+      scheduled_pickup_at: scheduledPickup || null,
       notes: notes || undefined,
     });
     setLoading(false);
@@ -41,7 +43,7 @@ export function DeliverItemModal({ itemId, itemName, onClose }: DeliverItemModal
       toast.error(result.error ?? "Failed to check out item");
       return;
     }
-    toast.success(`${itemName} marked as out for delivery`);
+    toast.success(`${itemName} staged for delivery`);
     router.refresh();
     onClose();
   }
@@ -52,7 +54,7 @@ export function DeliverItemModal({ itemId, itemName, onClose }: DeliverItemModal
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-2">
             <Truck className="h-5 w-5 text-amber-500" />
-            <h2 className="text-lg font-semibold text-gray-900">Deliver Item</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Stage for Delivery</h2>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="h-5 w-5" />
@@ -61,11 +63,12 @@ export function DeliverItemModal({ itemId, itemName, onClose }: DeliverItemModal
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <p className="text-sm text-gray-500">
-            Mark <span className="font-medium text-gray-800">{itemName}</span> as out for delivery.
+            Move <span className="font-medium text-gray-800">{itemName}</span> to a staging address.
+            Schedule a pickup date when the item needs to return to the warehouse.
           </p>
 
           <div className="space-y-1.5">
-            <Label htmlFor="address">Delivery Address *</Label>
+            <Label htmlFor="address">Staging Address *</Label>
             <Textarea
               id="address"
               placeholder="123 Main St, New York, NY 10001"
@@ -76,7 +79,7 @@ export function DeliverItemModal({ itemId, itemName, onClose }: DeliverItemModal
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="recipient">Recipient Name</Label>
+            <Label htmlFor="recipient">Recipient / Contact Name</Label>
             <Input
               id="recipient"
               placeholder="Jane Smith"
@@ -86,10 +89,21 @@ export function DeliverItemModal({ itemId, itemName, onClose }: DeliverItemModal
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="notes">Delivery Notes</Label>
+            <Label htmlFor="scheduled_pickup">Scheduled Pickup Date</Label>
+            <Input
+              id="scheduled_pickup"
+              type="date"
+              value={scheduledPickup}
+              onChange={(e) => setScheduledPickup(e.target.value)}
+            />
+            <p className="text-xs text-gray-400">When should this item be picked up and returned to the warehouse?</p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="notes">Notes</Label>
             <Input
               id="notes"
-              placeholder="Leave at door, ring bell, etc."
+              placeholder="Access instructions, special handling, etc."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
@@ -101,7 +115,7 @@ export function DeliverItemModal({ itemId, itemName, onClose }: DeliverItemModal
               {loading ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving…</>
               ) : (
-                <><Truck className="mr-2 h-4 w-4" />Confirm Delivery</>
+                <><Truck className="mr-2 h-4 w-4" />Confirm Staging</>
               )}
             </Button>
           </div>
