@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,12 +8,19 @@ import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
 import {
   ScanLine,
-  Upload,
   X,
   Loader2,
   Camera,
   CheckCircle2,
+  RefreshCw,
 } from "lucide-react";
+
+function generateSKU() {
+  const now = new Date();
+  const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  return `SV-${date}-${rand}`;
+}
 import { createItemSchema, type CreateItemInput } from "@/lib/validations/item";
 import { createItem, uploadItemPhotos } from "@/lib/actions/items";
 import { Button } from "@/components/ui/button";
@@ -65,8 +72,15 @@ export function ReceiveItemForm({ clients, locations, initialBarcode }: ReceiveI
     formState: { errors },
   } = useForm<CreateItemInput>({
     resolver: zodResolver(createItemSchema),
-    defaultValues: { quantity: 1, condition: "unknown", barcode: initialBarcode ?? "" },
+    defaultValues: { quantity: 1, condition: "unknown", barcode: initialBarcode ?? generateSKU() },
   });
+
+  // Regenerate SKU helper
+  function regenerateSKU() {
+    const sku = generateSKU();
+    setValue("barcode", sku);
+    toast.success(`New SKU: ${sku}`);
+  }
 
   // ── Drag & drop photos ────────────────────────────────────────────────────
   const onDrop = useCallback((accepted: File[]) => {
@@ -123,7 +137,7 @@ export function ReceiveItemForm({ clients, locations, initialBarcode }: ReceiveI
 
       // Reset for next item
       setTimeout(() => {
-        reset();
+        reset({ quantity: 1, condition: "unknown", barcode: generateSKU() });
         setPhotoFiles([]);
         setPhotoPreviews([]);
         setSuccess(false);
@@ -152,10 +166,10 @@ export function ReceiveItemForm({ clients, locations, initialBarcode }: ReceiveI
         <CardContent className="p-4 space-y-3">
           <div className="flex items-center gap-2">
             <div className="flex-1 space-y-1.5">
-              <Label htmlFor="barcode">Barcode / QR Code</Label>
+              <Label htmlFor="barcode">SKU / Barcode</Label>
               <Input
                 id="barcode"
-                placeholder="Scan or type barcode (auto-generated if blank)"
+                placeholder="Auto-generated SKU"
                 {...register("barcode")}
               />
             </div>
@@ -164,12 +178,23 @@ export function ReceiveItemForm({ clients, locations, initialBarcode }: ReceiveI
               variant="outline"
               size="icon"
               className="mt-6 shrink-0"
+              onClick={regenerateSKU}
+              title="Generate new SKU"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="mt-6 shrink-0"
               onClick={() => setShowScanner((v) => !v)}
-              title="Open barcode scanner"
+              title="Scan barcode"
             >
               <ScanLine className="h-5 w-5" />
             </Button>
           </div>
+          <p className="text-xs text-gray-400">Auto-generated SKU format: SV-YYYYMMDD-XXXX. Scan or type to override.</p>
 
           {showScanner && (
             <BarcodeScanner
