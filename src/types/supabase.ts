@@ -40,6 +40,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["warehouses"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["warehouses"]["Insert"]>;
+        Relationships: [];
       };
       profiles: {
         Row: {
@@ -57,6 +58,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["profiles"]["Row"], "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+        Relationships: [];
       };
       clients: {
         Row: {
@@ -80,6 +82,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["clients"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["clients"]["Insert"]>;
+        Relationships: [];
       };
       locations: {
         Row: {
@@ -98,6 +101,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["locations"]["Row"], "id" | "label" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["locations"]["Insert"]>;
+        Relationships: [];
       };
       items: {
         Row: {
@@ -127,6 +131,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["items"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["items"]["Insert"]>;
+        Relationships: [];
       };
       item_photos: {
         Row: {
@@ -141,6 +146,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["item_photos"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["item_photos"]["Insert"]>;
+        Relationships: [];
       };
       item_events: {
         Row: {
@@ -158,6 +164,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["item_events"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["item_events"]["Insert"]>;
+        Relationships: [];
       };
       service_requests: {
         Row: {
@@ -181,11 +188,13 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["service_requests"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["service_requests"]["Insert"]>;
+        Relationships: [];
       };
       service_request_items: {
         Row: { service_request_id: string; item_id: string; notes: string | null };
         Insert: Database["public"]["Tables"]["service_request_items"]["Row"];
         Update: Partial<Database["public"]["Tables"]["service_request_items"]["Row"]>;
+        Relationships: [];
       };
       storage_logs: {
         Row: {
@@ -205,6 +214,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["storage_logs"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["storage_logs"]["Insert"]>;
+        Relationships: [];
       };
       invoices: {
         Row: {
@@ -228,6 +238,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["invoices"]["Row"], "id" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["invoices"]["Insert"]>;
+        Relationships: [];
       };
       invoice_line_items: {
         Row: {
@@ -245,6 +256,7 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["invoice_line_items"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["invoice_line_items"]["Insert"]>;
+        Relationships: [];
       };
       notifications: {
         Row: {
@@ -260,9 +272,10 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["notifications"]["Row"], "id" | "created_at">;
         Update: Partial<Database["public"]["Tables"]["notifications"]["Insert"]>;
+        Relationships: [];
       };
     };
-    Views: Record<string, never>;
+    Views: Record<never, never>;
     Functions: {
       get_my_warehouse_id: { Args: Record<string, never>; Returns: string };
       get_my_role: { Args: Record<string, never>; Returns: "admin" | "staff" | "client" };

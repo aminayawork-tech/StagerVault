@@ -38,7 +38,8 @@ export async function createClient() {
  * NEVER expose this to the client.
  */
 export function createAdminClient() {
-  const { createClient } = require("@supabase/supabase-js");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { createClient } = require("@supabase/supabase-js") as typeof import("@supabase/supabase-js");
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
