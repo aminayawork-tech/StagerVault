@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ClipboardList } from "lucide-react";
+import Link from "next/link";
+import { ClipboardList, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { formatDate, formatServiceStatus, getServiceStatusColor } from "@/lib/utils/format";
 
 export const metadata: Metadata = { title: "My Service Requests" };
@@ -45,9 +47,17 @@ export default async function ClientServiceRequestsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">My Service Requests</h1>
-        <p className="text-sm text-gray-500">{requests?.length ?? 0} total requests</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">My Service Requests</h1>
+          <p className="text-sm text-gray-500">{requests?.length ?? 0} total requests</p>
+        </div>
+        <Button asChild>
+          <Link href="/dashboard/client/service-requests/new">
+            <Plus className="mr-2 h-4 w-4" />
+            New Request
+          </Link>
+        </Button>
       </div>
 
       {!requests?.length ? (
