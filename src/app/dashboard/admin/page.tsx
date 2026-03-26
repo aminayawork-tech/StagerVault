@@ -69,6 +69,7 @@ export default async function AdminDashboard() {
       .from("items")
       .select("id, name, status, condition, client:clients(name), created_at, primary_photo_url")
       .eq("warehouse_id", warehouseId)
+      .neq("status", "disposed")
       .order("created_at", { ascending: false })
       .limit(5),
 

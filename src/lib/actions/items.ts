@@ -273,16 +273,19 @@ export async function deleteItem(itemId: string): Promise<ActionResult<null>> {
       return { success: false, error: "Only admins can delete items" };
     }
 
-    // Soft delete via status change (preferred – preserves history)
+    // Soft delete: mark disposed and clear location so counter decrements
     const { error } = await supabase
       .from("items")
-      .update({ status: "disposed" })
+      .update({ status: "disposed", location_id: null })
       .eq("id", itemId)
       .eq("warehouse_id", profile.warehouse_id);
 
     if (error) return { success: false, error: error.message };
 
     revalidatePath("/dashboard/admin/items");
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/admin/locations");
+    revalidatePath("/dashboard/admin/reports");
     return { success: true, data: null };
   } catch (err) {
     return {
