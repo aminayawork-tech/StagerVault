@@ -109,15 +109,40 @@ export async function updateInvoiceStatus(
       return { success: false, error: "Only admins can update invoice status" };
     }
 
-    const { error } = await supabase
+    const { data: invoice, error } = await supabase
       .from("invoices")
       .update({ status })
       .eq("id", invoiceId)
-      .eq("warehouse_id", profile.warehouse_id);
+      .eq("warehouse_id", profile.warehouse_id)
+      .select("id, invoice_number, total, client_id")
+      .single();
 
     if (error) return { success: false, error: error.message };
 
+    // When sending, notify the client
+    if (status === "sent" && invoice) {
+      const { data: clientProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("client_id", invoice.client_id)
+        .eq("role", "client")
+        .maybeSingle();
+
+      if (clientProfile) {
+        await supabase.from("notifications").insert({
+          warehouse_id: profile.warehouse_id,
+          profile_id: clientProfile.id,
+          title: `Invoice ${invoice.invoice_number} received`,
+          body: `You have a new invoice for $${Number(invoice.total).toFixed(2)}. Please review and arrange payment.`,
+          type: "invoice_sent",
+          reference_id: invoice.id,
+        });
+      }
+    }
+
     revalidatePath("/dashboard/admin/invoices");
+    revalidatePath("/dashboard/client/invoices");
+    revalidatePath("/dashboard/notifications");
     return { success: true, data: null };
   } catch (err) {
     return {

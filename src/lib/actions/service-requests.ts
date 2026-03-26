@@ -113,8 +113,41 @@ export async function updateServiceRequest(
 
     if (error) return { success: false, error: error.message };
 
+    // Notify the client when admin updates the service request status
+    if (rest.status && profile.role !== "client") {
+      const statusMessages: Record<string, string> = {
+        accepted: "Your service request has been accepted.",
+        scheduled: "Your service request has been scheduled.",
+        in_progress: "Your service request is now in progress.",
+        completed: "Your service request has been completed.",
+        cancelled: "Your service request has been cancelled.",
+      };
+      const msg = statusMessages[rest.status as string];
+      if (msg) {
+        const { data: clientProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("client_id", existing.client_id)
+          .eq("role", "client")
+          .maybeSingle();
+
+        if (clientProfile) {
+          await supabase.from("notifications").insert({
+            warehouse_id: profile.warehouse_id,
+            profile_id: clientProfile.id,
+            title: `Service request ${rest.status}`,
+            body: `${msg} Request: ${(sr as any).title}`,
+            type: "service_update",
+            reference_id: id,
+          });
+        }
+      }
+    }
+
     revalidatePath("/dashboard/admin/service-requests");
     revalidatePath(`/dashboard/admin/service-requests/${id}`);
+    revalidatePath("/dashboard/client/service-requests");
+    revalidatePath("/dashboard/notifications");
     return { success: true, data: sr as unknown as ServiceRequest };
   } catch (err) {
     return {
