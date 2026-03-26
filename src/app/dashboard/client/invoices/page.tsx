@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { FileText } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
@@ -99,28 +100,30 @@ function Section({ title, invoices }: { title: string; invoices: any[] }) {
         <CardContent className="p-0">
           <ul className="divide-y divide-gray-100">
             {invoices.map((inv) => (
-              <li key={inv.id} className="flex items-center gap-4 px-6 py-4">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{inv.invoice_number}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {inv.period_start && inv.period_end
-                      ? `${formatDate(inv.period_start)} – ${formatDate(inv.period_end)}`
-                      : inv.due_date
-                      ? `Due ${formatDate(inv.due_date)}`
-                      : ""}
-                  </p>
-                  {inv.notes && (
-                    <p className="text-xs text-gray-400 mt-0.5 truncate">{inv.notes}</p>
-                  )}
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-bold text-gray-900">{formatCurrency(inv.total)}</p>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[inv.status] ?? "bg-gray-100 text-gray-600"}`}
-                  >
-                    {inv.status}
-                  </span>
-                </div>
+              <li key={inv.id}>
+                <Link href={`/dashboard/client/invoices/${inv.id}`} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{inv.invoice_number}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {inv.period_start && inv.period_end
+                        ? `${formatDate(inv.period_start)} – ${formatDate(inv.period_end)}`
+                        : inv.due_date
+                        ? `Due ${formatDate(inv.due_date)}`
+                        : ""}
+                    </p>
+                    {inv.notes && (
+                      <p className="text-xs text-gray-400 mt-0.5 truncate">{inv.notes}</p>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold text-gray-900">{formatCurrency(inv.total)}</p>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[inv.status] ?? "bg-gray-100 text-gray-600"}`}
+                    >
+                      {inv.status}
+                    </span>
+                  </div>
+                </Link>
               </li>
             ))}
           </ul>
