@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Package, ExternalLink } from "lucide-react";
+import { EditLocationForm } from "@/components/forms/edit-location-form";
 
 export const metadata: Metadata = { title: "Location Detail" };
 
@@ -65,7 +66,7 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
         </Link>
       </div>
 
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <MapPin className="h-6 w-6 text-orange-500" />
@@ -79,12 +80,17 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
           )}
         </div>
 
-        <div className="text-right">
-          <div className="text-3xl font-bold text-gray-900">
-            {items?.length ?? 0}
-            {location.capacity && <span className="text-lg text-gray-400">/{location.capacity}</span>}
+        <div className="flex flex-col items-end gap-2">
+          <div className="text-right">
+            <div className="text-3xl font-bold text-gray-900">
+              {items?.length ?? 0}
+              {location.capacity && <span className="text-lg text-gray-400">/{location.capacity}</span>}
+            </div>
+            <div className="text-sm text-gray-500">items stored</div>
           </div>
-          <div className="text-sm text-gray-500">items stored</div>
+          {profile.role === "admin" && (
+            <EditLocationForm location={location} />
+          )}
         </div>
       </div>
 

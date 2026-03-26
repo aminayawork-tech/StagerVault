@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CheckCircle, Calendar, Play, XCircle, ThumbsUp } from "lucide-react";
+import { CheckCircle, Calendar, Play, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,9 +51,6 @@ export function ServiceRequestActions({ srId, currentStatus }: ServiceRequestAct
   }
   if (["accepted", "scheduled", "in_progress"].includes(currentStatus)) {
     actions.push({ status: "completed", label: "Complete", icon: CheckCircle, className: "text-green-600 border-green-200 hover:bg-green-50" });
-  }
-  if (!["completed", "cancelled"].includes(currentStatus)) {
-    actions.push({ status: "cancelled", label: "Cancel", icon: XCircle, className: "text-red-600 border-red-200 hover:bg-red-50" });
   }
 
   if (!actions.length) return null;
