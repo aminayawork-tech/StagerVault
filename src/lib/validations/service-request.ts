@@ -1,14 +1,18 @@
 import { z } from "zod";
 
 export const serviceTypeValues = [
-  "receiving",
-  "storage",
-  "assembly",
   "delivery",
   "pickup",
+  "assembly",
+  "disassembly",
+  "staging",
+  "restaging",
+  "receiving",
+  "storage",
   "white_glove_delivery",
   "inspection",
   "disposal",
+  "other",
 ] as const;
 
 export const serviceRequestStatusValues = [
