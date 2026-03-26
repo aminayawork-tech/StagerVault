@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Plus, Send, CheckCircle } from "lucide-react";
+import { FileText, Plus, Send, CheckCircle, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreateInvoiceForm } from "@/components/forms/create-invoice-form";
+import { EditInvoiceForm } from "@/components/forms/edit-invoice-form";
 import { updateInvoiceStatus } from "@/lib/actions/invoices";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 
@@ -33,11 +34,13 @@ interface Invoice {
 interface InvoicesPageClientProps {
   invoices: Invoice[];
   clients: { id: string; name: string }[];
+  lineItemsByInvoice: Record<string, { description: string; quantity: number; unit_price: number }[]>;
 }
 
-export function InvoicesPageClient({ invoices, clients }: InvoicesPageClientProps) {
+export function InvoicesPageClient({ invoices, clients, lineItemsByInvoice }: InvoicesPageClientProps) {
   const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   async function handleMarkSent(invoiceId: string) {
@@ -66,6 +69,13 @@ export function InvoicesPageClient({ invoices, clients }: InvoicesPageClientProp
     <>
       {showCreate && (
         <CreateInvoiceForm clients={clients} onClose={() => setShowCreate(false)} />
+      )}
+      {editingInvoice && (
+        <EditInvoiceForm
+          invoice={editingInvoice}
+          lineItems={lineItemsByInvoice[editingInvoice.id] ?? []}
+          onClose={() => setEditingInvoice(null)}
+        />
       )}
 
       <div className="space-y-6">
@@ -133,16 +143,27 @@ export function InvoicesPageClient({ invoices, clients }: InvoicesPageClientProp
                     </span>
                     <div className="flex gap-1.5 shrink-0">
                       {inv.status === "draft" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={updatingId === inv.id}
-                          onClick={() => handleMarkSent(inv.id)}
-                          className="text-blue-600 border-blue-200 hover:bg-blue-50 text-xs"
-                        >
-                          <Send className="mr-1.5 h-3 w-3" />
-                          Send
-                        </Button>
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingInvoice(inv)}
+                            className="text-gray-600 border-gray-200 hover:bg-gray-50 text-xs"
+                          >
+                            <Pencil className="mr-1.5 h-3 w-3" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={updatingId === inv.id}
+                            onClick={() => handleMarkSent(inv.id)}
+                            className="text-blue-600 border-blue-200 hover:bg-blue-50 text-xs"
+                          >
+                            <Send className="mr-1.5 h-3 w-3" />
+                            Send
+                          </Button>
+                        </>
                       )}
                       {["sent", "overdue"].includes(inv.status) && (
                         <Button

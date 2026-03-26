@@ -18,7 +18,7 @@ export default async function InvoicesPage() {
 
   if (!profile || profile.role === "client") redirect("/dashboard/client");
 
-  const [{ data: invoices }, { data: clients }] = await Promise.all([
+  const [{ data: invoices }, { data: clients }, { data: lineItems }] = await Promise.all([
     supabase
       .from("invoices")
       .select("*, client:clients(name)")
@@ -31,12 +31,24 @@ export default async function InvoicesPage() {
       .eq("warehouse_id", profile.warehouse_id)
       .eq("is_active", true)
       .order("name"),
+
+    supabase
+      .from("invoice_line_items")
+      .select("invoice_id, description, quantity, unit_price"),
   ]);
+
+  // Group line items by invoice_id
+  const lineItemsByInvoice: Record<string, { description: string; quantity: number; unit_price: number }[]> = {};
+  for (const li of lineItems ?? []) {
+    if (!lineItemsByInvoice[li.invoice_id]) lineItemsByInvoice[li.invoice_id] = [];
+    lineItemsByInvoice[li.invoice_id].push({ description: li.description, quantity: li.quantity, unit_price: li.unit_price });
+  }
 
   return (
     <InvoicesPageClient
       invoices={(invoices as any[]) ?? []}
       clients={clients ?? []}
+      lineItemsByInvoice={lineItemsByInvoice}
     />
   );
 }

@@ -98,7 +98,61 @@ export async function createInvoice(
   }
 }
 
-export async function updateInvoiceStatus(
+export async function updateInvoice(
+  invoiceId: string,
+  input: Omit<CreateInvoiceInput, "client_id">
+): Promise<ActionResult<null>> {
+  try {
+    const { supabase, profile } = await getAuthContext();
+    if (profile.role !== "admin") return { success: false, error: "Only admins can edit invoices" };
+
+    // Only allow editing drafts
+    const { data: existing } = await supabase
+      .from("invoices")
+      .select("status")
+      .eq("id", invoiceId)
+      .eq("warehouse_id", profile.warehouse_id)
+      .single();
+
+    if (!existing) return { success: false, error: "Invoice not found" };
+    if (existing.status !== "draft") return { success: false, error: "Only draft invoices can be edited" };
+
+    const total = input.line_items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
+
+    const { error: updateError } = await supabase
+      .from("invoices")
+      .update({
+        period_start: input.period_start,
+        period_end: input.period_end,
+        due_date: input.due_date ?? null,
+        notes: input.notes ?? null,
+        total,
+      })
+      .eq("id", invoiceId)
+      .eq("warehouse_id", profile.warehouse_id);
+
+    if (updateError) return { success: false, error: updateError.message };
+
+    // Replace line items
+    await supabase.from("invoice_line_items").delete().eq("invoice_id", invoiceId);
+    await supabase.from("invoice_line_items").insert(
+      input.line_items.map((item) => ({
+        invoice_id: invoiceId,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total: item.quantity * item.unit_price,
+      }))
+    );
+
+    revalidatePath("/dashboard/admin/invoices");
+    return { success: true, data: null };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to update invoice" };
+  }
+}
+
+
   invoiceId: string,
   status: "draft" | "sent" | "paid" | "overdue" | "void"
 ): Promise<ActionResult<null>> {
