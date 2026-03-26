@@ -36,7 +36,7 @@ export default async function ServiceRequestDetailPage({
   const [{ data: sr }, { data: srItems }] = await Promise.all([
     supabase
       .from("service_requests")
-      .select("*, client:clients(id, name, email), requester:profiles(full_name)")
+      .select("*, client:clients(id, name, email), requester:profiles!requested_by(full_name)")
       .eq("id", id)
       .eq("warehouse_id", profile.warehouse_id)
       .single(),
