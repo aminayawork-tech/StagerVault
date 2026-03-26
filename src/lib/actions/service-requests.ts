@@ -61,8 +61,31 @@ export async function createServiceRequest(
       if (linkError) console.error("Failed to link items to SR:", linkError);
     }
 
+    // Notify warehouse admins/staff when a client submits
+    if (profile.role === "client") {
+      const { data: adminProfiles } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("warehouse_id", profile.warehouse_id)
+        .in("role", ["admin", "staff"]);
+
+      if (adminProfiles?.length) {
+        await supabase.from("notifications").insert(
+          adminProfiles.map((p) => ({
+            warehouse_id: profile.warehouse_id,
+            profile_id: p.id,
+            title: "New service request submitted",
+            body: `"${validated.title}" was submitted by a client.`,
+            type: "service_update",
+            reference_id: sr.id,
+          }))
+        );
+      }
+    }
+
     revalidatePath("/dashboard/admin/service-requests");
     revalidatePath("/dashboard/client/service-requests");
+    revalidatePath("/dashboard/notifications");
     return { success: true, data: sr as unknown as ServiceRequest };
   } catch (err) {
     return {
