@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatServiceStatus, getServiceStatusColor } from "@/lib/utils/format";
+import { ClientSRActions } from "@/components/service-requests/client-sr-actions";
 
 export const metadata: Metadata = { title: "Service Request" };
 
@@ -68,6 +69,8 @@ export default async function ClientServiceRequestDetailPage({
           {formatServiceStatus(sr.status)}
         </span>
       </div>
+
+      <ClientSRActions sr={sr} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card>

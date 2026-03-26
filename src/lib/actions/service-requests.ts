@@ -156,3 +156,134 @@ export async function updateServiceRequest(
     };
   }
 }
+
+// ─── Client: Edit Service Request ─────────────────────────────────────────────
+
+export async function clientEditServiceRequest(
+  id: string,
+  input: {
+    title: string;
+    description?: string;
+    delivery_address?: string;
+    requested_date?: string;
+    notes?: string;
+  }
+): Promise<ActionResult<null>> {
+  try {
+    const { supabase, user, profile } = await getAuthContext();
+    if (profile.role !== "client") return { success: false, error: "Clients only" };
+
+    const { data: existing } = await supabase
+      .from("service_requests")
+      .select("id, title, status, client_id, warehouse_id")
+      .eq("id", id)
+      .eq("client_id", profile.client_id)
+      .single();
+
+    if (!existing) return { success: false, error: "Request not found" };
+    if (!["submitted", "draft"].includes(existing.status)) {
+      return { success: false, error: "Only submitted requests can be edited" };
+    }
+
+    const { error } = await supabase
+      .from("service_requests")
+      .update({
+        title: input.title,
+        description: input.description ?? null,
+        delivery_address: input.delivery_address ?? null,
+        requested_date: input.requested_date ?? null,
+        notes: input.notes ?? null,
+      })
+      .eq("id", id);
+
+    if (error) return { success: false, error: error.message };
+
+    // Notify warehouse admins
+    const { data: adminProfiles } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("warehouse_id", existing.warehouse_id)
+      .in("role", ["admin", "staff"]);
+
+    if (adminProfiles?.length) {
+      await supabase.from("notifications").insert(
+        adminProfiles.map((p) => ({
+          warehouse_id: existing.warehouse_id,
+          profile_id: p.id,
+          title: "Client updated a service request",
+          body: `"${input.title}" was updated by the client.`,
+          type: "service_update",
+          reference_id: id,
+        }))
+      );
+    }
+
+    revalidatePath(`/dashboard/client/service-requests/${id}`);
+    revalidatePath("/dashboard/admin/service-requests");
+    revalidatePath(`/dashboard/admin/service-requests/${id}`);
+    return { success: true, data: null };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to update" };
+  }
+}
+
+// ─── Client: Cancel Service Request ───────────────────────────────────────────
+
+export async function clientCancelServiceRequest(
+  id: string
+): Promise<ActionResult<null>> {
+  try {
+    const { supabase, profile } = await getAuthContext();
+    if (profile.role !== "client") return { success: false, error: "Clients only" };
+
+    const { data: existing } = await supabase
+      .from("service_requests")
+      .select("id, title, status, client_id, warehouse_id")
+      .eq("id", id)
+      .eq("client_id", profile.client_id)
+      .single();
+
+    if (!existing) return { success: false, error: "Request not found" };
+    if (["completed", "cancelled"].includes(existing.status)) {
+      return { success: false, error: "Request is already closed" };
+    }
+    if (existing.status === "in_progress") {
+      return { success: false, error: "Cannot cancel a request that is in progress — contact the warehouse" };
+    }
+
+    const { error } = await supabase
+      .from("service_requests")
+      .update({ status: "cancelled" })
+      .eq("id", id);
+
+    if (error) return { success: false, error: error.message };
+
+    // Notify warehouse admins
+    const { data: adminProfiles } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("warehouse_id", existing.warehouse_id)
+      .in("role", ["admin", "staff"]);
+
+    if (adminProfiles?.length) {
+      await supabase.from("notifications").insert(
+        adminProfiles.map((p) => ({
+          warehouse_id: existing.warehouse_id,
+          profile_id: p.id,
+          title: "Client cancelled a service request",
+          body: `"${existing.title}" was cancelled by the client.`,
+          type: "service_update",
+          reference_id: id,
+        }))
+      );
+    }
+
+    revalidatePath(`/dashboard/client/service-requests/${id}`);
+    revalidatePath("/dashboard/client/service-requests");
+    revalidatePath("/dashboard/admin/service-requests");
+    revalidatePath(`/dashboard/admin/service-requests/${id}`);
+    return { success: true, data: null };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Failed to cancel" };
+  }
+}
