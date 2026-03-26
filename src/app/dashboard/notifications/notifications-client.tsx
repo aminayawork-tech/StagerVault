@@ -14,9 +14,18 @@ interface Notification {
   id: string;
   title: string;
   body: string | null;
+  type: string;
+  reference_id: string | null;
   is_read: boolean;
   created_at: string;
-  link: string | null;
+}
+
+function getNotificationLink(n: Notification): string | null {
+  if (!n.reference_id) return null;
+  if (n.type === "invoice_sent") return `/dashboard/client/invoices/${n.reference_id}`;
+  if (n.type === "service_update") return `/dashboard/client/service-requests/${n.reference_id}`;
+  if (n.type === "item_received") return `/dashboard/client/items/${n.reference_id}`;
+  return null;
 }
 
 export function NotificationsClient({ notifications }: { notifications: Notification[] }) {
@@ -96,10 +105,11 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
                 </div>
               );
 
+              const link = getNotificationLink(n);
               return (
                 <li key={n.id} onClick={() => handleMarkRead(n.id)}>
-                  {n.link ? (
-                    <Link href={n.link} className="block hover:bg-gray-50 cursor-pointer">
+                  {link ? (
+                    <Link href={link} className="block hover:bg-gray-50 cursor-pointer">
                       {content}
                     </Link>
                   ) : (

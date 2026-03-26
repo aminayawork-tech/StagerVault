@@ -15,7 +15,7 @@ export default async function NotificationsPage() {
 
   const { data: notifications } = await supabase
     .from("notifications")
-    .select("id, title, body, is_read, created_at, link")
+    .select("id, title, body, type, reference_id, is_read, created_at")
     .eq("profile_id", user.id)
     .order("created_at", { ascending: false })
     .limit(50);
