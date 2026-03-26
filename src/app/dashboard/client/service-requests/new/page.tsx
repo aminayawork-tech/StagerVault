@@ -24,6 +24,7 @@ export default async function NewServiceRequestPage() {
     .select("id, name, barcode, status, primary_photo_url")
     .eq("client_id", profile.client_id)
     .not("status", "eq", "delivered")
+    .not("status", "eq", "disposed")
     .order("name");
 
   const itemsWithPhotos = (items ?? []).map((item: any) => ({

@@ -34,7 +34,7 @@ export const createServiceRequestSchema = z.object({
   requested_date: z.string().optional().nullable(), // ISO date string
   price: z.coerce.number().min(0).optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
-  item_ids: z.array(z.string().uuid()).min(1, "Select at least one item"),
+  item_ids: z.array(z.string().uuid()).default([]),
 });
 
 export const updateServiceRequestSchema = z.object({
