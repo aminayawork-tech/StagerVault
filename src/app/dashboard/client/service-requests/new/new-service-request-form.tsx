@@ -31,7 +31,7 @@ const SERVICE_TYPES = [
 
 interface Props {
   clientId: string;
-  items: { id: string; name: string; barcode: string | null; status: string }[];
+  items: { id: string; name: string; barcode: string | null; status: string; photoUrl: string | null }[];
 }
 
 export function NewServiceRequestForm({ clientId, items }: Props) {
@@ -187,7 +187,7 @@ export function NewServiceRequestForm({ clientId, items }: Props) {
             <CardContent className="p-4 space-y-3">
               <Label>Related Items (optional)</Label>
               <p className="text-xs text-gray-400">Select which items this request is about.</p>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
+              <div className="space-y-2 max-h-64 overflow-y-auto">
                 {items.map((item) => (
                   <label
                     key={item.id}
@@ -199,14 +199,26 @@ export function NewServiceRequestForm({ clientId, items }: Props) {
                   >
                     <input
                       type="checkbox"
-                      className="accent-orange-500"
+                      className="accent-orange-500 shrink-0"
                       checked={selectedItems.includes(item.id)}
                       onChange={() => toggleItem(item.id)}
                     />
-                    <span className="flex-1 text-sm font-medium text-gray-900 truncate">
-                      {item.name}
-                    </span>
-                    <span className="text-xs text-gray-400 capitalize">{item.status}</span>
+                    {/* Thumbnail */}
+                    <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center">
+                      {item.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.photoUrl} alt={item.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-gray-300 text-xl">📦</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-sm font-medium text-gray-900 truncate">{item.name}</span>
+                      {item.barcode && (
+                        <span className="text-xs text-gray-400 font-mono">{item.barcode}</span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-400 capitalize shrink-0">{item.status}</span>
                   </label>
                 ))}
               </div>
