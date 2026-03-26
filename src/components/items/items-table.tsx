@@ -2,8 +2,10 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useCallback, useRef } from "react";
-import { Package, Search, MapPin, ChevronLeft, ChevronRight, X, Pencil } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { Package, Search, MapPin, ChevronLeft, ChevronRight, X, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { deleteItem } from "@/lib/actions/items";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -58,6 +60,21 @@ export function ItemsTable({
   const searchParams = useSearchParams();
   const totalPages = Math.ceil(total / pageSize);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete(id: string) {
+    setDeleting(true);
+    const result = await deleteItem(id);
+    setDeleting(false);
+    setConfirmDeleteId(null);
+    if (!result.success) {
+      toast.error(result.error ?? "Failed to delete item");
+    } else {
+      toast.success("Item deleted");
+      router.refresh();
+    }
+  }
 
   const updateFilter = useCallback(
     (key: string, value: string | undefined) => {
@@ -184,7 +201,7 @@ export function ItemsTable({
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3">Condition</th>
                     <th className="px-4 py-3">Received</th>
-                    <th className="px-4 py-3 w-10" />
+                    <th className="px-4 py-3 w-20" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -256,13 +273,40 @@ export function ItemsTable({
                         {formatDate(item.received_at ?? item.created_at)}
                       </td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <Link
-                          href={`/dashboard/admin/items/${item.id}/edit`}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-                          title="Edit item"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Link>
+                        <div className="flex items-center gap-1">
+                          <Link
+                            href={`/dashboard/admin/items/${item.id}/edit`}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                            title="Edit item"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Link>
+                          {confirmDeleteId === item.id ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleDelete(item.id)}
+                                disabled={deleting}
+                                className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                              >
+                                {deleting ? "…" : "Yes"}
+                              </button>
+                              <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                              >
+                                No
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmDeleteId(item.id)}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              title="Delete item"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -308,14 +352,40 @@ export function ItemsTable({
                       )}
                     </div>
                   </div>
-                  <Link
-                    href={`/dashboard/admin/items/${item.id}/edit`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="shrink-0 p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                    title="Edit item"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Link>
+                  <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.preventDefault()}>
+                    <Link
+                      href={`/dashboard/admin/items/${item.id}/edit`}
+                      className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="Edit item"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Link>
+                    {confirmDeleteId === item.id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          disabled={deleting}
+                          className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {deleting ? "…" : "Yes"}
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                        >
+                          No
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteId(item.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete item"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </Link>
               ))}
             </div>
