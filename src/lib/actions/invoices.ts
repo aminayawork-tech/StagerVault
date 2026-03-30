@@ -152,7 +152,7 @@ export async function updateInvoice(
   }
 }
 
-
+export async function updateInvoiceStatus(
   invoiceId: string,
   status: "draft" | "sent" | "paid" | "overdue" | "void"
 ): Promise<ActionResult<null>> {
