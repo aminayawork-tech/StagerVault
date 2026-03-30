@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, ClipboardList, Loader2 } from "lucide-react";
+import { ArrowLeft, ClipboardList, Loader2, Search } from "lucide-react";
 import Link from "next/link";
 import { createServiceRequest } from "@/lib/actions/service-requests";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ export function NewServiceRequestForm({ clientId, items }: Props) {
   const [saving, setSaving] = useState(false);
   const [serviceType, setServiceType] = useState("");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [itemSearch, setItemSearch] = useState("");
 
   function toggleItem(id: string) {
     setSelectedItems((prev) =>
@@ -185,10 +186,28 @@ export function NewServiceRequestForm({ clientId, items }: Props) {
         {items.length > 0 && (
           <Card>
             <CardContent className="p-4 space-y-3">
-              <Label>Related Items (optional)</Label>
-              <p className="text-xs text-gray-400">Select which items this request is about.</p>
+              <div className="flex items-center justify-between">
+                <Label>Related Items (optional)</Label>
+                {selectedItems.length > 0 && (
+                  <span className="text-xs text-orange-600 font-medium">{selectedItems.length} selected</span>
+                )}
+              </div>
+              {/* Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by name or SKU…"
+                  value={itemSearch}
+                  onChange={(e) => setItemSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+              </div>
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {items.map((item) => (
+                {items.filter((item) => {
+                  const q = itemSearch.toLowerCase();
+                  return !q || item.name.toLowerCase().includes(q) || (item.barcode ?? "").toLowerCase().includes(q);
+                }).map((item) => (
                   <label
                     key={item.id}
                     className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer border transition-colors ${
@@ -221,6 +240,12 @@ export function NewServiceRequestForm({ clientId, items }: Props) {
                     <span className="text-xs text-gray-400 capitalize shrink-0">{item.status}</span>
                   </label>
                 ))}
+                {items.filter((item) => {
+                  const q = itemSearch.toLowerCase();
+                  return !q || item.name.toLowerCase().includes(q) || (item.barcode ?? "").toLowerCase().includes(q);
+                }).length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-4">No items match your search</p>
+                )}
               </div>
             </CardContent>
           </Card>
