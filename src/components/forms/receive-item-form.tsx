@@ -23,6 +23,7 @@ function generateSKU() {
 }
 import { createItemSchema, type CreateItemInput } from "@/lib/validations/item";
 import { createItem, uploadItemPhotos } from "@/lib/actions/items";
+import { compressImage } from "@/lib/utils/compress-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -83,8 +84,9 @@ export function ReceiveItemForm({ clients, locations, initialBarcode }: ReceiveI
   }
 
   // ── Drag & drop photos ────────────────────────────────────────────────────
-  const onDrop = useCallback((accepted: File[]) => {
-    const newFiles = [...photoFiles, ...accepted].slice(0, 10); // max 10 photos
+  const onDrop = useCallback(async (accepted: File[]) => {
+    const compressed = await Promise.all(accepted.map((f) => compressImage(f)));
+    const newFiles = [...photoFiles, ...compressed].slice(0, 10);
     setPhotoFiles(newFiles);
     const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
     setPhotoPreviews(newPreviews);

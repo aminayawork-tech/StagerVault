@@ -9,6 +9,7 @@ import { Loader2, Save, Camera, X } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { updateItemSchema, type UpdateItemInput } from "@/lib/validations/item";
 import { updateItem, uploadItemPhotos } from "@/lib/actions/items";
+import { compressImage } from "@/lib/utils/compress-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,8 +69,9 @@ export function EditItemForm({ item, clients, locations }: EditItemFormProps) {
     },
   });
 
-  const onDrop = useCallback((accepted: File[]) => {
-    const newFiles = [...photoFiles, ...accepted].slice(0, 10);
+  const onDrop = useCallback(async (accepted: File[]) => {
+    const compressed = await Promise.all(accepted.map((f) => compressImage(f)));
+    const newFiles = [...photoFiles, ...compressed].slice(0, 10);
     setPhotoFiles(newFiles);
     setPhotoPreviews(newFiles.map((f) => URL.createObjectURL(f)));
   }, [photoFiles]);
