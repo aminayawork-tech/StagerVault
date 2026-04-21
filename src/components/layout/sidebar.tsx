@@ -7,11 +7,9 @@ import {
   Package,
   MapPin,
   ClipboardList,
-  FileText,
   Users,
   Settings,
   Truck,
-  BarChart3,
   Bell,
   ScanLine,
 } from "lucide-react";
@@ -91,24 +89,6 @@ const navItems: NavItem[] = [
     label: "Clients",
     href: "/dashboard/admin/clients",
     icon: Users,
-    roles: ["admin"],
-  },
-  {
-    label: "Invoices",
-    href: "/dashboard/admin/invoices",
-    icon: FileText,
-    roles: ["admin"],
-  },
-  {
-    label: "My Invoices",
-    href: "/dashboard/client/invoices",
-    icon: FileText,
-    roles: ["client"],
-  },
-  {
-    label: "Reports",
-    href: "/dashboard/admin/reports",
-    icon: BarChart3,
     roles: ["admin"],
   },
   {
