@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Package, ClipboardList, FileText, ArrowRight, MapPin } from "lucide-react";
+import { Package, ClipboardList, ArrowRight, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,6 @@ export default async function ClientPortal() {
     { count: staged },
     { data: recentItems },
     { data: activeRequests },
-    { data: openInvoices },
   ] = await Promise.all([
     supabase
       .from("clients")
@@ -80,17 +79,7 @@ export default async function ClientPortal() {
       .order("created_at", { ascending: false })
       .limit(4),
 
-    supabase
-      .from("invoices")
-      .select("id, invoice_number, total, due_date, status")
-      .eq("client_id", clientId)
-      .in("status", ["sent", "overdue"])
-      .order("due_date", { ascending: true })
-      .limit(3),
   ]);
-
-  const storageRate = clientRecord?.billing_rate_monthly ?? 25;
-  const estimatedMonthly = (inStorage ?? 0) * storageRate;
 
   return (
     <div className="space-y-6">
@@ -103,7 +92,7 @@ export default async function ClientPortal() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-3 gap-4">
         {[
           {
             label: "Total Items",
@@ -122,12 +111,6 @@ export default async function ClientPortal() {
             value: staged ?? 0,
             href: "/dashboard/client/items?status=staged",
             className: "text-amber-600 bg-amber-50",
-          },
-          {
-            label: "Est. Monthly",
-            value: formatCurrency(estimatedMonthly),
-            href: "/dashboard/client/invoices",
-            className: "text-purple-600 bg-purple-50",
           },
         ].map((stat) => (
           <Link key={stat.label} href={stat.href}>
@@ -271,60 +254,6 @@ export default async function ClientPortal() {
             </CardContent>
           </Card>
 
-          {/* Open Invoices */}
-          {openInvoices && openInvoices.length > 0 && (
-            <Card className="border-amber-200">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-amber-600" />
-                    Outstanding Invoices
-                  </CardTitle>
-                  <Link
-                    href="/dashboard/client/invoices"
-                    className="text-sm text-vault-600 hover:underline flex items-center gap-1"
-                  >
-                    View all <ArrowRight className="h-3 w-3" />
-                  </Link>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ul className="divide-y divide-gray-50">
-                  {openInvoices.map((inv: any) => (
-                    <li key={inv.id}>
-                      <Link
-                        href={`/dashboard/client/invoices/${inv.id}`}
-                        className="flex items-center gap-3 px-6 py-3 hover:bg-gray-50"
-                      >
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">
-                            {inv.invoice_number}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            Due {formatDate(inv.due_date)}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-gray-900">
-                            {formatCurrency(inv.total)}
-                          </p>
-                          <span
-                            className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
-                              inv.status === "overdue"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-amber-100 text-amber-700"
-                            }`}
-                          >
-                            {inv.status}
-                          </span>
-                        </div>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>
