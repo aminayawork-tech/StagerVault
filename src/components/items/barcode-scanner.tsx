@@ -7,15 +7,11 @@ import { Button } from "@/components/ui/button";
 interface BarcodeScannerProps {
   onScan: (code: string) => void;
   onClose: () => void;
+  containerId?: string;
 }
 
-/**
- * Browser-based barcode / QR scanner using html5-qrcode.
- * Falls back gracefully if camera permission is denied or on unsupported devices.
- */
-export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
+export function BarcodeScanner({ onScan, onClose, containerId = "barcode-scanner-container" }: BarcodeScannerProps) {
   const scannerRef = useRef<any>(null);
-  const containerId = "barcode-scanner-container";
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(true);
 
@@ -24,33 +20,22 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
     async function startScanner() {
       try {
-        // Lazy-load html5-qrcode to avoid SSR issues
         const { Html5Qrcode } = await import("html5-qrcode");
         scanner = new Html5Qrcode(containerId);
         scannerRef.current = scanner;
 
         await scanner.start(
-          { facingMode: "environment" }, // rear camera on mobile
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 150 },
-            aspectRatio: 1.5,
-          },
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.5 },
           (decodedText: string) => {
-            // Success – stop scanner and call parent
             scanner.stop().catch(() => {});
             onScan(decodedText);
           },
-          () => {
-            // Scan attempt (not a match) – ignore
-          }
+          () => {}
         );
         setIsStarting(false);
       } catch (err) {
-        const msg =
-          err instanceof Error
-            ? err.message
-            : "Camera access denied or unavailable.";
+        const msg = err instanceof Error ? err.message : "Camera access denied or unavailable.";
         setError(msg);
         setIsStarting(false);
       }
@@ -59,23 +44,15 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
     startScanner();
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {});
-      }
+      if (scannerRef.current) scannerRef.current.stop().catch(() => {});
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="rounded-lg overflow-hidden border border-gray-200 bg-black">
       <div className="flex items-center justify-between px-3 py-2 bg-gray-900">
-        <p className="text-sm text-white font-medium">Point camera at barcode / QR code</p>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="text-gray-300 hover:text-white h-7 w-7"
-          onClick={onClose}
-        >
+        <p className="text-sm text-white font-medium">Point camera at barcode</p>
+        <Button type="button" variant="ghost" size="icon" className="text-gray-300 hover:text-white h-7 w-7" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -89,17 +66,11 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
           </div>
         </div>
       ) : (
-        <div
-          id={containerId}
-          className="w-full"
-          style={{ minHeight: 200 }}
-        />
+        <div id={containerId} className="w-full" style={{ minHeight: 200 }} />
       )}
 
       {isStarting && !error && (
-        <p className="text-xs text-gray-400 text-center py-2 bg-gray-900">
-          Starting camera…
-        </p>
+        <p className="text-xs text-gray-400 text-center py-2 bg-gray-900">Starting camera…</p>
       )}
     </div>
   );
