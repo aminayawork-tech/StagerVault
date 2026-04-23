@@ -76,30 +76,35 @@ export function ItemActions({
   }
 
   function handlePrintLabel() {
-    const win = window.open("", "_blank", "width=420,height=320");
+    const win = window.open("", "_blank", "width=440,height=380");
     if (!win) return;
-    win.document.write(`
-      <!DOCTYPE html><html><head><title>Item Label</title>
+    const desc = itemDescription ?? "";
+    win.document.write(`<!DOCTYPE html><html><head><title>Item Label</title>
+      <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
       <style>
-        body{font-family:Arial,sans-serif;margin:0;padding:16px;}
-        .label{border:2px solid #000;padding:14px;width:340px;}
-        .sku{font-size:11px;color:#555;margin-bottom:2px;}
-        .barcode{font-family:monospace;font-size:30px;letter-spacing:5px;margin:6px 0;}
-        .name{font-size:15px;font-weight:bold;margin:4px 0;}
-        .desc{font-size:12px;color:#333;margin-top:4px;white-space:pre-wrap;}
-        .brand{font-size:10px;color:#888;margin-top:10px;}
-        @media print{body{margin:0;}}
+        body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#fff;}
+        .label{border:2px solid #000;padding:14px;width:360px;box-sizing:border-box;}
+        svg{display:block;width:100%;height:auto;}
+        .name{font-size:15px;font-weight:bold;margin:6px 0 2px;}
+        .desc{font-size:11px;color:#333;margin-top:2px;white-space:pre-wrap;}
+        .brand{font-size:10px;color:#888;margin-top:8px;border-top:1px solid #eee;padding-top:6px;}
+        @media print{body{margin:0;padding:8px;}}
       </style></head><body>
       <div class="label">
-        <p class="sku">SKU: ${itemBarcode}</p>
-        <p class="barcode">|||||||||||</p>
-        <p class="name">${itemName}</p>
-        ${itemDescription ? `<p class="desc">${itemDescription}</p>` : ""}
-        <p class="brand">StagerVault · ${new Date().toLocaleDateString()}</p>
+        <svg id="bc"></svg>
+        <p class="name">${itemName.replace(/</g,"&lt;")}</p>
+        ${desc ? `<p class="desc">${desc.replace(/</g,"&lt;")}</p>` : ""}
+        <p class="brand">StagerVault &middot; ${new Date().toLocaleDateString()}</p>
       </div>
-      <script>window.onload=()=>{window.print();}</script>
-      </body></html>
-    `);
+      <script>
+        window.onload = function() {
+          JsBarcode("#bc", ${JSON.stringify(itemBarcode)}, {
+            format: "CODE128", width: 2, height: 60,
+            displayValue: true, fontSize: 13, margin: 6
+          });
+          window.print();
+        };
+      <\/script></body></html>`);
     win.document.close();
   }
 
