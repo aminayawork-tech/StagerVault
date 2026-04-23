@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Calendar, Package, Edit } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Package, Edit, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,12 +38,13 @@ export default async function ItemDetailPage({
 
   if (!profile) redirect("/auth/login");
 
-  const [{ data: item }, { data: photos }, { data: events }] = await Promise.all([
+  const [{ data: item }, { data: photos }, { data: locations }, { data: events }] = await Promise.all([
     supabase
       .from("items")
       .select(
         `*, client:clients(id, name, email),
-         location:locations(id, label, zone, aisle, bay)`
+         location:locations(id, label, zone, aisle, bay),
+         creator:profiles!items_created_by_fkey(full_name)`
       )
       .eq("id", id)
       .eq("warehouse_id", profile.warehouse_id)
@@ -54,6 +55,12 @@ export default async function ItemDetailPage({
       .select("id, storage_path, caption, created_at")
       .eq("item_id", id)
       .order("created_at", { ascending: true }),
+
+    supabase
+      .from("locations")
+      .select("id, label, current_count, capacity")
+      .eq("warehouse_id", profile.warehouse_id)
+      .order("label"),
 
     supabase
       .from("item_events")
@@ -105,11 +112,15 @@ export default async function ItemDetailPage({
           </p>
         </div>
         {isStaff && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <ItemActions
               itemId={id}
               itemName={item.name}
+              itemBarcode={item.barcode ?? ""}
+              itemDescription={item.description ?? undefined}
               currentStatus={item.status}
+              currentLocationId={item.location_id ?? null}
+              locations={locations ?? []}
             />
             <Button asChild variant="outline" size="sm">
               <Link href={`/dashboard/admin/items/${id}/edit`}>
@@ -198,6 +209,14 @@ export default async function ItemDetailPage({
             )}
             <Row label="Received">{formatDate(item.received_at ?? item.created_at)}</Row>
             <Row label="Last Updated">{formatDateTime(item.updated_at)}</Row>
+            {(item as any).creator?.full_name && (
+              <Row label="Added By">
+                <span className="flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5 text-gray-400" />
+                  {(item as any).creator.full_name}
+                </span>
+              </Row>
+            )}
             {item.scheduled_pickup_at && (
               <Row label="Pickup Date">
                 <span className="text-amber-600 font-medium">
