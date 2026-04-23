@@ -39,16 +39,22 @@ export function ScanPageClient({ locations }: { locations: Location[] }) {
   const [moveConfirmBarcode, setMoveConfirmBarcode] = useState("");
   const scannerRef = useRef<any>(null);
   const containerId = "scan-camera";
+  const busyRef = useRef(false);
 
   const handleScanResult = useCallback(async (barcode: string) => {
-    if (loading) return;
+    if (busyRef.current) return;
+    busyRef.current = true;
     setScannedBarcode(barcode);
     setLoading(true);
-    const result = await lookupByBarcode(barcode.trim());
-    setLoading(false);
-    setScanResult(result);
-    setPhase(result.found ? "result" : "not-found");
-  }, [loading]);
+    try {
+      const result = await lookupByBarcode(barcode.trim());
+      setScanResult(result);
+      setPhase(result.found ? "result" : "not-found");
+    } finally {
+      setLoading(false);
+      busyRef.current = false;
+    }
+  }, []); // stable — uses ref for guard, not state
 
   // Start camera scanner
   useEffect(() => {
@@ -76,9 +82,12 @@ export function ScanPageClient({ locations }: { locations: Location[] }) {
 
     start();
     return () => {
-      if (scannerRef.current) scannerRef.current.stop().catch(() => {});
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {});
+        scannerRef.current = null;
+      }
     };
-  }, [phase, handleScanResult]);
+  }, [phase, handleScanResult]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function reset() {
     setScanResult(null);
