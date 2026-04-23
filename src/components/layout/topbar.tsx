@@ -74,7 +74,7 @@ export function Topbar({ role, warehouseName, userName, unreadNotifications = 0 
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2 px-2">
               <div className="w-7 h-7 rounded-full bg-vault-100 flex items-center justify-center text-vault-700 text-sm font-semibold">
-                {userName.charAt(0).toUpperCase()}
+                {(userName ?? "?").charAt(0).toUpperCase()}
               </div>
               <span className="hidden sm:block text-sm font-medium text-gray-700 max-w-[120px] truncate">
                 {userName}

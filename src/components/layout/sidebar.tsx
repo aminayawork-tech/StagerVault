@@ -176,7 +176,7 @@ export function Sidebar({ role, warehouseName, userName, unreadNotifications = 0
         </Link>
         <div className="flex items-center gap-3 px-3 py-2 text-sm text-gray-400">
           <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-300 shrink-0">
-            {userName.charAt(0).toUpperCase()}
+            {(userName ?? "?").charAt(0).toUpperCase()}
           </div>
           <span className="truncate text-xs">{userName}</span>
         </div>
