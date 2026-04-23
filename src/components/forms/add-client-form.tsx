@@ -11,7 +11,6 @@ import { createNewClient } from "@/lib/actions/clients";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AddClientFormProps {
   onClose: () => void;
@@ -22,7 +21,6 @@ export function AddClientForm({ onClose }: AddClientFormProps) {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateClientInput>({ resolver: zodResolver(createClientSchema) });
 
@@ -63,51 +61,6 @@ export function AddClientForm({ onClose }: AddClientFormProps) {
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="jane@example.com" {...register("email")} />
               {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" placeholder="555-1234" {...register("phone")} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="billing_rate_monthly">Monthly Rate ($/item)</Label>
-              <Input id="billing_rate_monthly" type="number" step="0.01" placeholder="25.00" {...register("billing_rate_monthly")} />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Billing Cycle</Label>
-            <Select defaultValue="monthly" onValueChange={(v) => setValue("billing_cycle", v as any)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="per_item">Per Item</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="address">Address</Label>
-            <Input id="address" placeholder="123 Main St" {...register("address")} />
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1.5 col-span-1">
-              <Label htmlFor="city">City</Label>
-              <Input id="city" placeholder="New York" {...register("city")} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="state">State</Label>
-              <Input id="state" placeholder="NY" {...register("state")} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="zip">ZIP</Label>
-              <Input id="zip" placeholder="10001" {...register("zip")} />
             </div>
           </div>
 

@@ -5,19 +5,28 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ScanLine, X, Package, MapPin, Plus, ArrowRight,
-  Loader2, CheckCircle, Truck, RotateCcw, AlertCircle,
+  Loader2, CheckCircle, Truck, RotateCcw, AlertCircle, MoveRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { lookupByBarcode, type ScanResult } from "@/lib/actions/scan";
-import { updateItemStatus, returnToWarehouse } from "@/lib/actions/items";
+import { updateItemStatus, returnToWarehouse, moveItem } from "@/lib/actions/items";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatItemStatus, getStatusColor } from "@/lib/utils/format";
 import { DeliverItemModal } from "@/components/items/deliver-item-modal";
 
-type Phase = "scan" | "result" | "not-found";
+type Phase = "scan" | "result" | "not-found" | "move" | "move-confirm";
 
-export function ScanPageClient() {
+interface Location {
+  id: string;
+  label: string;
+  zone: string;
+  current_count: number;
+  capacity: number | null;
+}
+
+export function ScanPageClient({ locations }: { locations: Location[] }) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("scan");
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
@@ -26,6 +35,8 @@ export function ScanPageClient() {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [showDeliverModal, setShowDeliverModal] = useState(false);
+  const [moveToLocationId, setMoveToLocationId] = useState<string>("");
+  const [moveConfirmBarcode, setMoveConfirmBarcode] = useState("");
   const scannerRef = useRef<any>(null);
   const containerId = "scan-camera";
 
@@ -94,6 +105,25 @@ export function ScanPageClient() {
     setActionLoading(false);
     if (!result.success) { toast.error(result.error ?? "Failed"); return; }
     toast.success("Returned to warehouse");
+    reset();
+  }
+
+  async function handleConfirmMove() {
+    if (!scanResult?.item) return;
+    const input = moveConfirmBarcode.trim();
+    if (input !== scannedBarcode) {
+      toast.error(`Barcode mismatch. Scan the same item: ${scannedBarcode}`);
+      return;
+    }
+    setActionLoading(true);
+    const selectedLoc = locations.find((l) => l.id === moveToLocationId);
+    const result = await moveItem({
+      item_id: scanResult.item.id,
+      to_location_id: moveToLocationId || null,
+    });
+    setActionLoading(false);
+    if (!result.success) { toast.error(result.error ?? "Failed to move item"); return; }
+    toast.success(`Moved to ${selectedLoc?.label ?? "new location"}`);
     reset();
   }
 
@@ -196,6 +226,132 @@ export function ScanPageClient() {
             <ScanLine className="mr-2 h-4 w-4" />
             Scan Again
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Move phase: pick location ───────────────────────────────────────────────
+  if (phase === "move") {
+    return (
+      <div className="flex flex-col min-h-[calc(100vh-56px)] bg-white">
+        <div className="flex items-center justify-between px-4 py-3 bg-gray-900">
+          <span className="text-white font-semibold text-sm">Move Item</span>
+          <button onClick={() => setPhase("result")} className="text-gray-400 hover:text-white">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="flex-1 p-5 space-y-5">
+          <div className="bg-blue-50 rounded-xl p-4">
+            <p className="text-xs text-blue-500 font-medium">Moving</p>
+            <p className="font-semibold text-gray-900 mt-0.5">{item?.name}</p>
+            {item?.location?.label && (
+              <p className="text-xs text-gray-500 mt-1">Current: {item.location.label}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700">Select new location</p>
+            <Select value={moveToLocationId} onValueChange={setMoveToLocationId}>
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder="Choose location…" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
+                {locations.map((loc) => (
+                  <SelectItem
+                    key={loc.id}
+                    value={loc.id}
+                    disabled={loc.capacity != null && loc.current_count >= loc.capacity && loc.id !== item?.location_id}
+                  >
+                    {loc.label}
+                    {loc.capacity != null && (
+                      <span className="ml-2 text-xs text-gray-400">({loc.current_count}/{loc.capacity})</span>
+                    )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button
+            className="w-full h-12 text-base"
+            disabled={!moveToLocationId}
+            onClick={() => { setMoveConfirmBarcode(""); setPhase("move-confirm"); }}
+          >
+            <MoveRight className="mr-2 h-5 w-5" />
+            Continue to Confirm
+          </Button>
+          <Button variant="ghost" className="w-full" onClick={() => setPhase("result")}>
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Move confirm: scan item barcode to confirm placement ───────────────────
+  if (phase === "move-confirm") {
+    const targetLoc = locations.find((l) => l.id === moveToLocationId);
+    return (
+      <div className="flex flex-col min-h-[calc(100vh-56px)] bg-white">
+        <div className="flex items-center justify-between px-4 py-3 bg-gray-900">
+          <span className="text-white font-semibold text-sm">Confirm Placement</span>
+          <button onClick={() => setPhase("move")} className="text-gray-400 hover:text-white">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="flex-1 p-5 space-y-5">
+          <div className="bg-green-50 rounded-xl p-4 text-center">
+            <MapPin className="mx-auto h-8 w-8 text-green-500 mb-2" />
+            <p className="text-sm text-gray-500">Place item in</p>
+            <p className="text-xl font-bold text-gray-900 mt-1">{targetLoc?.label ?? "selected location"}</p>
+            <p className="text-xs text-gray-400 mt-1">then scan the item label to confirm</p>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700">Scan item barcode to confirm</p>
+            <div className="flex gap-2">
+              <Input
+                className="flex-1 font-mono"
+                placeholder="Scan or type barcode…"
+                value={moveConfirmBarcode}
+                onChange={(e) => setMoveConfirmBarcode(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && moveConfirmBarcode.trim() && handleConfirmMove()}
+                autoFocus
+              />
+              <Button
+                disabled={!moveConfirmBarcode.trim() || actionLoading}
+                onClick={handleConfirmMove}
+                className="shrink-0"
+              >
+                {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm"}
+              </Button>
+            </div>
+            <p className="text-xs text-gray-400">Expected: <code className="font-mono">{scannedBarcode}</code></p>
+          </div>
+
+          <div className="rounded-lg bg-gray-50 p-3">
+            <p className="text-xs text-gray-500 font-medium mb-1">Manual override</p>
+            <p className="text-xs text-gray-400 mb-2">If scanning isn't working, skip scan and confirm manually.</p>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={actionLoading}
+              onClick={async () => {
+                setActionLoading(true);
+                const selectedLoc = locations.find((l) => l.id === moveToLocationId);
+                const result = await moveItem({ item_id: item!.id, to_location_id: moveToLocationId || null });
+                setActionLoading(false);
+                if (!result.success) { toast.error(result.error ?? "Failed"); return; }
+                toast.success(`Moved to ${selectedLoc?.label ?? "new location"}`);
+                reset();
+              }}
+            >
+              {actionLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Skip scan &amp; confirm anyway
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -310,6 +466,19 @@ export function ScanPageClient() {
                 >
                   {actionLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <RotateCcw className="mr-2 h-5 w-5" />}
                   Return to Warehouse
+                </Button>
+              )}
+
+              {/* Move to location — available for stored/received items */}
+              {["received", "stored", "assembled"].includes(item?.status ?? "") && (
+                <Button
+                  className="w-full h-12 text-base"
+                  variant="outline"
+                  onClick={() => { setMoveToLocationId(""); setPhase("move"); }}
+                  disabled={actionLoading}
+                >
+                  <MoveRight className="mr-2 h-5 w-5" />
+                  Move to Location
                 </Button>
               )}
 

@@ -13,6 +13,7 @@ import {
   Camera,
   CheckCircle2,
   RefreshCw,
+  Printer,
 } from "lucide-react";
 
 function generateSKU() {
@@ -56,13 +57,29 @@ const ITEM_CATEGORIES = [
   "media", "storage", "lighting", "other",
 ];
 
+const COLOR_OPTIONS = [
+  "White", "Off-White / Cream", "Beige / Tan", "Gray", "Charcoal", "Black",
+  "Brown / Walnut", "Oak / Natural", "Blue / Navy", "Green", "Red / Burgundy",
+  "Yellow / Gold", "Orange", "Pink / Blush", "Purple", "Multi / Pattern", "Other",
+];
+
+interface CreatedItem {
+  id: string;
+  name: string;
+  barcode: string;
+  description?: string;
+}
+
 export function ReceiveItemForm({ clients, locations, initialBarcode }: ReceiveItemFormProps) {
   const router = useRouter();
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [showScanner, setShowScanner] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [createdItem, setCreatedItem] = useState<CreatedItem | null>(null);
+  const [primaryColor, setPrimaryColor] = useState<string>("");
+  const [verifyBarcode, setVerifyBarcode] = useState("");
+  const [verified, setVerified] = useState(false);
 
   const {
     register,
@@ -116,6 +133,10 @@ export function ReceiveItemForm({ clients, locations, initialBarcode }: ReceiveI
   // ── Submit ────────────────────────────────────────────────────────────────
   async function onSubmit(values: CreateItemInput) {
     setIsSubmitting(true);
+    const colorLabel = primaryColor && primaryColor !== "Other" ? primaryColor : null;
+    if (colorLabel) {
+      values = { ...values, description: `Color: ${colorLabel}${values.description ? `\n${values.description}` : ""}` };
+    }
     try {
       const result = await createItem(values);
 
@@ -134,28 +155,123 @@ export function ReceiveItemForm({ clients, locations, initialBarcode }: ReceiveI
         }
       }
 
-      setSuccess(true);
       toast.success(`"${values.name}" checked in successfully!`);
-
-      // Reset for next item
-      setTimeout(() => {
-        reset({ quantity: 1, condition: "unknown", barcode: generateSKU() });
-        setPhotoFiles([]);
-        setPhotoPreviews([]);
-        setSuccess(false);
-      }, 2000);
+      setCreatedItem({
+        id: result.data.id,
+        name: values.name,
+        barcode: result.data.barcode ?? values.barcode ?? "",
+        description: values.description,
+      });
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  if (success) {
+  function handlePrintLabel() {
+    if (!createdItem) return;
+    const win = window.open("", "_blank", "width=400,height=300");
+    if (!win) return;
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Item Label</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 16px; }
+            .label { border: 2px solid #000; padding: 12px; width: 320px; }
+            .barcode { font-family: monospace; font-size: 28px; letter-spacing: 4px; margin: 8px 0; }
+            .sku { font-size: 11px; color: #555; margin-bottom: 4px; }
+            .name { font-size: 15px; font-weight: bold; margin: 4px 0; }
+            .desc { font-size: 12px; color: #333; margin-top: 4px; white-space: pre-wrap; }
+            .brand { font-size: 10px; color: #888; margin-top: 8px; }
+            @media print { body { margin: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="label">
+            <p class="sku">SKU: ${createdItem.barcode}</p>
+            <p class="barcode">|||||||||||</p>
+            <p class="name">${createdItem.name}</p>
+            ${createdItem.description ? `<p class="desc">${createdItem.description}</p>` : ""}
+            <p class="brand">StagerVault · ${new Date().toLocaleDateString()}</p>
+          </div>
+          <script>window.onload = () => { window.print(); }</script>
+        </body>
+      </html>
+    `);
+    win.document.close();
+  }
+
+  function handleVerify() {
+    if (!createdItem) return;
+    const input = verifyBarcode.trim();
+    if (input === createdItem.barcode) {
+      setVerified(true);
+      toast.success("Barcode verified! Item is registered.");
+    } else {
+      toast.error(`Barcode mismatch. Expected: ${createdItem.barcode}`);
+    }
+  }
+
+  function handleNextItem() {
+    reset({ quantity: 1, condition: "unknown", barcode: generateSKU() });
+    setPhotoFiles([]);
+    setPhotoPreviews([]);
+    setPrimaryColor("");
+    setCreatedItem(null);
+    setVerifyBarcode("");
+    setVerified(false);
+  }
+
+  if (createdItem) {
     return (
       <Card>
-        <CardContent className="flex flex-col items-center justify-center py-16 gap-4">
-          <CheckCircle2 className="h-16 w-16 text-green-500" />
-          <p className="text-lg font-semibold text-gray-900">Item Received!</p>
-          <p className="text-sm text-gray-500">Ready for next item…</p>
+        <CardContent className="flex flex-col items-center py-10 gap-5 px-6">
+          <CheckCircle2 className="h-14 w-14 text-green-500" />
+          <div className="text-center">
+            <p className="text-lg font-semibold text-gray-900">Item Received!</p>
+            <p className="text-sm text-gray-500 mt-1">{createdItem.name}</p>
+            <p className="text-xs text-gray-400 font-mono mt-0.5">SKU: {createdItem.barcode}</p>
+          </div>
+
+          {/* Step 1: Print Label */}
+          <div className="w-full space-y-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Step 1 — Print & attach label</p>
+            <Button type="button" onClick={handlePrintLabel} className="w-full" variant="outline">
+              <Printer className="mr-2 h-4 w-4" />
+              Print Label
+            </Button>
+          </div>
+
+          {/* Step 2: Scan to verify */}
+          <div className="w-full space-y-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Step 2 — Scan label to verify</p>
+            {verified ? (
+              <div className="flex items-center gap-2 text-green-600 bg-green-50 rounded-lg px-3 py-2">
+                <CheckCircle2 className="h-4 w-4" />
+                <span className="text-sm font-medium">Barcode verified!</span>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Scan or type barcode…"
+                  value={verifyBarcode}
+                  onChange={(e) => setVerifyBarcode(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleVerify())}
+                  className="flex-1 font-mono"
+                />
+                <Button type="button" onClick={handleVerify} variant="outline" size="icon">
+                  <ScanLine className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            <p className="text-xs text-gray-400">Scan the attached label to confirm registration in receiving area.</p>
+          </div>
+
+          <Button type="button" onClick={handleNextItem} className="w-full mt-2">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Receive Next Item
+          </Button>
         </CardContent>
       </Card>
     );
@@ -343,10 +459,35 @@ export function ReceiveItemForm({ clients, locations, initialBarcode }: ReceiveI
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              placeholder="Brand, color, material, notable features…"
+              placeholder="Brand, material, notable features…"
               rows={2}
               {...register("description")}
             />
+          </div>
+
+          {/* Primary Color */}
+          <div className="space-y-1.5">
+            <Label>Primary Color</Label>
+            <Select
+              onValueChange={(v) => setPrimaryColor(v)}
+              value={primaryColor}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select color (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {COLOR_OPTIONS.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {primaryColor === "Other" && (
+              <Input
+                placeholder="Enter color…"
+                onChange={(e) => setPrimaryColor(e.target.value || "Other")}
+                className="mt-2"
+              />
+            )}
           </div>
 
           {/* Notes */}

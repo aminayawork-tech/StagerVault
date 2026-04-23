@@ -14,6 +14,7 @@ export interface ScanResult {
     primary_photo_url: string | null;
     staged_address: string | null;
     scheduled_pickup_at: string | null;
+    location_id: string | null;
     client: { name: string } | null;
     location: { label: string } | null;
   };
@@ -34,7 +35,7 @@ export async function lookupByBarcode(barcode: string): Promise<ScanResult> {
 
   const { data: item } = await supabase
     .from("items")
-    .select("id, name, status, condition, barcode, quantity, primary_photo_url, staged_address, scheduled_pickup_at, client:clients(name), location:locations(label)")
+    .select("id, name, status, condition, barcode, quantity, primary_photo_url, staged_address, scheduled_pickup_at, location_id, client:clients(name), location:locations(label)")
     .eq("warehouse_id", profile.warehouse_id)
     .eq("barcode", barcode)
     .neq("status", "disposed")

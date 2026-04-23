@@ -18,5 +18,11 @@ export default async function ScanPage() {
 
   if (!profile || !["admin", "staff"].includes(profile.role)) redirect("/");
 
-  return <ScanPageClient />;
+  const { data: locations } = await supabase
+    .from("locations")
+    .select("id, label, zone, current_count, capacity")
+    .eq("warehouse_id", profile.warehouse_id)
+    .order("label");
+
+  return <ScanPageClient locations={locations ?? []} />;
 }

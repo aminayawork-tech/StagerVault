@@ -20,11 +20,9 @@ export default async function SettingsPage() {
 
   const { data: warehouse } = await supabase
     .from("warehouses")
-    .select("*")
+    .select("name, slug, email, phone, address, city, state, zip")
     .eq("id", profile.warehouse_id)
     .single();
-
-  const settings = warehouse?.settings ?? {};
 
   return (
     <div className="space-y-6">
@@ -45,26 +43,6 @@ export default async function SettingsPage() {
               { label: "Email", value: warehouse?.email },
               { label: "Phone", value: warehouse?.phone },
               { label: "Address", value: [warehouse?.address, warehouse?.city, warehouse?.state, warehouse?.zip].filter(Boolean).join(", ") || null },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex justify-between items-start gap-4">
-                <span className="text-sm text-gray-500 shrink-0">{label}</span>
-                <span className="text-sm text-gray-900 text-right">{value || <span className="text-gray-400 italic">Not set</span>}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Billing Defaults</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              { label: "Storage Rate", value: settings.default_storage_rate_monthly ? `$${settings.default_storage_rate_monthly}/item/mo` : null },
-              { label: "Currency", value: settings.currency },
-              { label: "Invoice Due Days", value: settings.invoice_due_days ? `${settings.invoice_due_days} days` : null },
-              { label: "Invoice Prefix", value: settings.invoice_prefix },
-              { label: "Timezone", value: settings.timezone },
             ].map(({ label, value }) => (
               <div key={label} className="flex justify-between items-start gap-4">
                 <span className="text-sm text-gray-500 shrink-0">{label}</span>
