@@ -28,7 +28,7 @@ export function BarcodeScanner({ onScan, onClose, containerId = "barcode-scanner
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.5 },
           (decodedText: string) => {
-            scanner.stop().catch(() => {});
+            try { scanner.stop().catch(() => {}); } catch { /* already stopped */ }
             onScan(decodedText);
           },
           () => {}
@@ -44,7 +44,9 @@ export function BarcodeScanner({ onScan, onClose, containerId = "barcode-scanner
     startScanner();
 
     return () => {
-      if (scannerRef.current) scannerRef.current.stop().catch(() => {});
+      if (scannerRef.current) {
+        try { scannerRef.current.stop().catch(() => {}); } catch { /* already stopped */ }
+      }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

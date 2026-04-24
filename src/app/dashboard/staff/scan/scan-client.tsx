@@ -72,7 +72,7 @@ export function ScanPageClient({ locations }: { locations: Location[] }) {
           { facingMode: "environment" },
           { fps: 12, qrbox: { width: 280, height: 120 } },
           (decoded: string) => {
-            scanner.stop().catch(() => {});
+            try { scanner.stop().catch(() => {}); } catch { /* already stopped */ }
             handleScanResult(decoded);
           },
           () => {}
@@ -85,7 +85,7 @@ export function ScanPageClient({ locations }: { locations: Location[] }) {
     start();
     return () => {
       if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {});
+        try { scannerRef.current.stop().catch(() => {}); } catch { /* already stopped */ }
         scannerRef.current = null;
       }
     };
