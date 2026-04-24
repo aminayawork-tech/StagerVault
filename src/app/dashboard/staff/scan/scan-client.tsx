@@ -50,6 +50,8 @@ export function ScanPageClient({ locations }: { locations: Location[] }) {
       const result = await lookupByBarcode(barcode.trim());
       setScanResult(result);
       setPhase(result.found ? "result" : "not-found");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Lookup failed — try again");
     } finally {
       setLoading(false);
       busyRef.current = false;

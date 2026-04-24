@@ -21,27 +21,31 @@ export interface ScanResult {
 }
 
 export async function lookupByBarcode(barcode: string): Promise<ScanResult> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { found: false };
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { found: false };
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("warehouse_id, role")
-    .eq("id", user.id)
-    .single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("warehouse_id, role")
+      .eq("id", user.id)
+      .single();
 
-  if (!profile || !["admin", "staff"].includes(profile.role)) return { found: false };
+    if (!profile || !["admin", "staff"].includes(profile.role)) return { found: false };
 
-  const { data: item } = await supabase
-    .from("items")
-    .select("id, name, status, condition, barcode, quantity, primary_photo_url, staged_address, scheduled_pickup_at, location_id, client:clients(name), location:locations(label)")
-    .eq("warehouse_id", profile.warehouse_id)
-    .eq("barcode", barcode)
-    .neq("status", "disposed")
-    .single();
+    const { data: item } = await supabase
+      .from("items")
+      .select("id, name, status, condition, barcode, quantity, primary_photo_url, staged_address, scheduled_pickup_at, location_id, client:clients(name), location:locations(label)")
+      .eq("warehouse_id", profile.warehouse_id)
+      .eq("barcode", barcode)
+      .neq("status", "disposed")
+      .single();
 
-  if (!item) return { found: false };
+    if (!item) return { found: false };
 
-  return { found: true, item: item as any };
+    return { found: true, item: item as any };
+  } catch {
+    return { found: false };
+  }
 }
