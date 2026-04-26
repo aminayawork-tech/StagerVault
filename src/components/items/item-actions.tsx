@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Truck, CheckCircle, RotateCcw, MoveRight, Printer, X, ScanLine, MapPin } from "lucide-react";
+import { Truck, CheckCircle, RotateCcw, MoveRight, Printer, X, ScanLine, MapPin, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -146,6 +146,7 @@ export function ItemActions({
   }
 
   const targetLocation = locations.find((l) => l.id === moveToLocationId);
+  const currentLocation = locations.find((l) => l.id === currentLocationId) ?? null;
 
   return (
     <>
@@ -232,8 +233,20 @@ export function ItemActions({
               {movePhase === "scan-pickup" && (
                 <>
                   <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-800">
-                    <p className="font-medium">Step 2 of 3 — Verify item</p>
-                    <p className="text-xs mt-0.5">Scan <code className="font-mono">{itemBarcode}</code> to confirm you have the right item.</p>
+                    <p className="font-medium">Step 2 of 3 — Pick up item</p>
+                    <p className="text-xs mt-0.5">Go to the current location, grab the item, then scan its barcode.</p>
+                  </div>
+
+                  {/* Movement trail: from → to */}
+                  <div className="flex items-center gap-2 text-xs bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-200">
+                    <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                    <code className="bg-white border border-gray-200 px-1.5 py-0.5 rounded font-mono text-gray-700 truncate max-w-[90px]">
+                      {currentLocation?.label ?? "Unassigned"}
+                    </code>
+                    <ArrowRight className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                    <code className="bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded font-mono text-blue-700 truncate max-w-[90px]">
+                      {targetLocation?.label ?? "Unassigned"}
+                    </code>
                   </div>
 
                   {showCamera ? (
@@ -277,9 +290,21 @@ export function ItemActions({
                   <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 flex gap-2">
                     <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
                     <div>
-                      <p className="font-medium">Move item now</p>
-                      <p className="text-xs mt-0.5">Take it to <strong>{targetLocation?.label ?? "the selected location"}</strong>, then scan to confirm placement.</p>
+                      <p className="font-medium">Step 3 of 3 — Place & confirm</p>
+                      <p className="text-xs mt-0.5">Bring item to <strong>{targetLocation?.label ?? "the destination"}</strong>, then scan to record placement.</p>
                     </div>
+                  </div>
+
+                  {/* Movement trail: from → to */}
+                  <div className="flex items-center gap-2 text-xs bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-200">
+                    <MapPin className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                    <code className="bg-white border border-gray-200 px-1.5 py-0.5 rounded font-mono text-gray-700 truncate max-w-[90px]">
+                      {currentLocation?.label ?? "Unassigned"}
+                    </code>
+                    <ArrowRight className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                    <code className="bg-green-50 border border-green-300 px-1.5 py-0.5 rounded font-mono text-green-700 truncate max-w-[90px]">
+                      {targetLocation?.label ?? "Unassigned"}
+                    </code>
                   </div>
 
                   {showCamera ? (

@@ -96,20 +96,23 @@ export default async function ItemDetailPage({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Back + header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href={isStaff ? "/dashboard/admin/items" : "/dashboard/client/items"}>
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-gray-900 truncate">{item.name}</h1>
-          <p className="text-sm text-gray-500">
-            {(item.client as any)?.name} ·{" "}
-            <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
-              {item.barcode}
-            </code>
-          </p>
+      <div className="space-y-3">
+        <div className="flex items-start gap-3">
+          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-0.5">
+            <Link href={isStaff ? "/dashboard/admin/items" : "/dashboard/client/items"}>
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold text-gray-900 leading-tight break-words">{item.name}</h1>
+            <p className="text-sm text-gray-500 mt-0.5 flex flex-wrap items-center gap-1.5">
+              <span>{(item.client as any)?.name}</span>
+              <span className="text-gray-300">·</span>
+              <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded break-all">
+                {item.barcode}
+              </code>
+            </p>
+          </div>
         </div>
         {isStaff && (
           <div className="flex flex-wrap gap-2">

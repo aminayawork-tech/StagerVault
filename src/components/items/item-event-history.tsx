@@ -1,4 +1,4 @@
-import { ArrowRight, MapPin, User } from "lucide-react";
+import { ArrowRight, MapPin, MoveRight, User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatItemStatus, getStatusColor, formatDateTime } from "@/lib/utils/format";
 
@@ -48,16 +48,24 @@ export function ItemEventHistory({ events }: { events: EventRecord[] }) {
                 <div className="flex-1 min-w-0 pb-1">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium inline-block ${getStatusColor(event.event_type as any)}`}
-                      >
-                        {formatItemStatus(event.event_type as any)}
-                      </span>
+                      {/* Show "Moved" badge when it's a location-change event */}
+                      {event.from_location && event.to_location ? (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1 bg-purple-50 text-purple-700 border border-purple-200">
+                          <MoveRight className="h-3 w-3" />
+                          Moved
+                        </span>
+                      ) : (
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full font-medium inline-block ${getStatusColor(event.event_type as any)}`}
+                        >
+                          {formatItemStatus(event.event_type as any)}
+                        </span>
+                      )}
 
                       {/* Location change */}
                       {(event.from_location || event.to_location) && (
                         <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
-                          <MapPin className="h-3 w-3" />
+                          <MapPin className="h-3 w-3 shrink-0" />
                           {event.from_location?.label && (
                             <code className="bg-gray-100 px-1 rounded">
                               {event.from_location.label}
